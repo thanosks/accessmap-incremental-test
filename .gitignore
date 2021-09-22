@@ -4,3 +4,6 @@ __pycache__
 
 # Editors
 *.swp
+
+# Data directories that should not be checked in
+./output
