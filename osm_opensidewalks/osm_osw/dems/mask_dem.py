@@ -25,9 +25,16 @@ class BuildingHandler(osmium.SimpleHandler):
 
     def area(self, a):
         if "building" in a.tags:
-            geojson = self.geojson_factory.create_multipolygon(a)
-            geojson_geom = json.loads(geojson)
-            self.buildings.append(geojson_geom)
+            try:
+                geojson = self.geojson_factory.create_multipolygon(a)
+                geojson_geom = json.loads(geojson)
+                self.buildings.append(geojson_geom)
+            except RuntimeError:
+                # A RuntimeError is raised when the multipolygon cannot be
+                # created. This is upstream behavior that we do not yet work
+                # around, so instead we will simply skip the building
+                pass
+
             if self.progressbar is not None:
                 self.progressbar.update(1)
 

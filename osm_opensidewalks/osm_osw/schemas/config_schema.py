@@ -2,21 +2,34 @@
 import json
 from pathlib import Path
 
-from marshmallow import fields
+from marshmallow import fields, EXCLUDE
 
-from .geojson import PolygonFeatureSchema, PolygonFeatureCollectionSchema
+from .geojson import (
+    MultiPolygonFeatureSchema,
+    MultiPolygonFeatureCollectionSchema,
+)
 from .region_schema import RegionPropertiesSchema
 
 
 class ConfigPropertiesSchema(RegionPropertiesSchema):
+    class Meta:
+        exclude = ("bounds",)
+        unknown = EXCLUDE
+
     extract_url = fields.Str(required=True)
 
 
-class ConfigFeatureSchema(PolygonFeatureSchema):
+class ConfigFeatureSchema(MultiPolygonFeatureSchema):
+    class Meta:
+        unknown = EXCLUDE
+
     properties = fields.Nested(ConfigPropertiesSchema, required=True)
 
 
-class ConfigSchema(PolygonFeatureCollectionSchema):
+class ConfigSchema(MultiPolygonFeatureCollectionSchema):
+    class Meta:
+        unknown = EXCLUDE
+
     features = fields.List(fields.Nested(ConfigFeatureSchema))
 
     @classmethod

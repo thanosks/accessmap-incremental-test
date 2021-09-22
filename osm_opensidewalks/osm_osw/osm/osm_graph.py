@@ -9,6 +9,20 @@ from shapely.geometry import LineString, mapping, shape
 from ..osw.osw_normalizer import OSWNormalizer
 
 
+class WayCounter(osmium.SimpleHandler):
+    def __init__(self, way_filter=None):
+        super().__init__()
+        self.count = 0
+        if way_filter is None:
+            self.way_filter = lambda w: True
+        else:
+            self.way_filter = way_filter
+
+    def way(self, w):
+        if self.way_filter(w.tags):
+            self.count += 1
+
+
 class OSMGraph:
     def __init__(self, G=None):
         if G is not None:
@@ -18,7 +32,7 @@ class OSMGraph:
         self.geod = pyproj.Geod(ellps="WGS84")
 
     @classmethod
-    def from_pbf(self, pbf, way_filter=None):
+    def from_pbf(self, pbf, way_filter=None, progressbar=None):
         class OSMParser(osmium.SimpleHandler):
             def __init__(self):
                 osmium.SimpleHandler.__init__(self)
@@ -64,6 +78,8 @@ class OSMGraph:
                     del v
 
                 del w
+                if progressbar:
+                    progressbar.update(1)
 
         parser = OSMParser()
         parser.apply_file(pbf, locations=True)
@@ -142,7 +158,7 @@ class OSMGraph:
                     self.G.remove_edge(node, following_node)
                 self.G.add_edges_from([(u, node, edge_data)])
 
-    def construct_geometries(self):
+    def construct_geometries(self, progressbar=None):
         """Given the current list of node references per edge, construct
         geometry.
 
@@ -158,6 +174,8 @@ class OSMGraph:
             d["geometry"] = geometry
             d["length"] = round(self.geod.geometry_length(geometry), 1)
             del d["ndref"]
+            if progressbar:
+                progressbar.update(1)
 
         # FIXME: remove orphaned nodes!
 

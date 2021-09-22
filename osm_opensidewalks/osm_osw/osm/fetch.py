@@ -3,19 +3,16 @@ from pathlib import Path
 import click
 import requests
 
-from ..constants import TMP_DIR
-
-
 CHUNK_SIZE = 8192
 
 
-def osm_fetch(url, progressbar=False):
-    tmp_dir_path = Path(TMP_DIR)
+def osm_fetch(url, workdir, progressbar=False):
+    workdir_path = Path(workdir)
     filename = Path(url).name
-    filepath = Path(tmp_dir_path, filename)
+    filepath = Path(workdir_path, filename)
 
-    if not tmp_dir_path.exists():
-        tmp_dir_path.mkdir()
+    if not workdir_path.exists():
+        workdir_path.mkdir()
 
     # FIXME: provide progress feedback
     with requests.get(url, stream=True) as r:
@@ -33,4 +30,7 @@ def osm_fetch(url, progressbar=False):
                 if progressbar:
                     pbar.update(len(chunk))
 
-    return tmp_dir_path
+        if progressbar:
+            pbar.render_finish()
+
+    return filepath

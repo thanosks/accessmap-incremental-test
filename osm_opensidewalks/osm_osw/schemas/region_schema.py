@@ -2,7 +2,10 @@
 
 from marshmallow import Schema, fields
 
-from .geojson import PolygonFeatureSchema, PolygonFeatureCollectionSchema
+from .geojson import (
+    MultiPolygonFeatureSchema,
+    MultiPolygonFeatureCollectionSchema,
+)
 
 
 class RegionPropertiesSchema(Schema):
@@ -17,9 +20,9 @@ class RegionPropertiesSchema(Schema):
     )
 
 
-class RegionFeatureSchema(PolygonFeatureSchema):
+class RegionFeatureSchema(MultiPolygonFeatureSchema):
     properties = fields.Nested(RegionPropertiesSchema, required=True)
 
 
-class RegionFeatureCollectionSchema(PolygonFeatureCollectionSchema):
+class RegionFeatureCollectionSchema(MultiPolygonFeatureCollectionSchema):
     features = fields.List(fields.Nested(RegionFeatureSchema))

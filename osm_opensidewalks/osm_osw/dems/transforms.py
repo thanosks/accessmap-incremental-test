@@ -7,7 +7,7 @@ from rasterio.windows import Window
 import requests
 from scipy.interpolate import RectBivariateSpline
 
-from .constants import DEM_DIR, ned_13_index
+from .constants import ned_13_index
 
 AWS_BASE = "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation"
 TEMPLATE = AWS_BASE + "/13/TIFF/{e}/USGS_13_{e}.tif"
@@ -21,20 +21,29 @@ class FailedWindowRead(ValueError):
     pass
 
 
-def list_ned13s():
+def get_dem_dir(workdir):
+    dem_path = Path(workdir, "dems")
+    if not dem_path.exists():
+        dem_path.mkdir()
+
+    return dem_path
+
+
+def list_ned13s(workdir):
     """List cached NED13 tilesets.
 
     :returns: List of strings
 
     """
-    tifs = DEM_DIR.glob("*.tif")
+    dem_dir = get_dem_dir(workdir)
+    tifs = dem_dir.glob("*.tif")
     tiles = [Path(tif).stem for tif in tifs]
     matching = [tile for tile in tiles if tile in ned_13_index]
 
     return matching
 
 
-def get_ned13_for_bounds(bounds, progressbar=False):
+def get_ned13_for_bounds(bounds, workdir, progressbar=False):
     """Retrieve the NED 1/3 arc-second tileset names based on a WGS84 (lon-lat)
     bounding box list: [w, s, e, n].
 
@@ -63,7 +72,7 @@ def get_ned13_for_bounds(bounds, progressbar=False):
                 pass
 
     # Check temporary dir for these tiles
-    cached_tiles = list_ned13s()
+    cached_tiles = list_ned13s(workdir)
 
     # TODO: use set operations so that the code is easier to understand
     fetch_tiles = [tile for tile in ned_13_tiles if tile not in cached_tiles]
@@ -82,17 +91,18 @@ def get_ned13_for_bounds(bounds, progressbar=False):
     # TODO: make this fully async, use a queue to fetch and insert via separate
     # tasks
     for tilename in fetch_tiles:
-        fetch_ned_tile(tilename, progressbar=progressbar)
+        fetch_ned_tile(tilename, workdir, progressbar=progressbar)
 
 
-def fetch_ned_tile(tilename, progressbar=False):
+def fetch_ned_tile(tilename, workdir, progressbar=False):
     if tilename not in ned_13_index:
         raise InvalidNED13TileName(f"Invalid tile name {tilename}")
 
     url = TEMPLATE.format(e=tilename)
 
     filename = f"{tilename}.tif"
-    path = Path(DEM_DIR, filename)
+    dem_dir = get_dem_dir(workdir)
+    path = Path(dem_dir, filename)
 
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
@@ -133,9 +143,10 @@ def bilinear(dx, dy, arr):
 
 
 def idw(dx, dy, masked_array):
-    if masked_array.shape[0] != masked_array.shape[1] != 3:
+    if (masked_array.shape[0] != 3) or (masked_array.shape[1] != 3):
         # Received an array that isn't 3x3
         return None
+
     # Do not attempt interpolation if less than 25% of the data is unmasked.
     ncells = masked_array.shape[0] * masked_array.shape[1]
     if (masked_array.mask.sum() / ncells) >= 0.75:

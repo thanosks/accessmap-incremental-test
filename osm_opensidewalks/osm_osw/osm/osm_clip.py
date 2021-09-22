@@ -24,6 +24,7 @@ def osm_clip(in_pbf_path: str, out_pbf_path: str, polygon: dict):
                 [
                     "osmium",
                     "extract",
+                    "--overwrite",
                     "-p",
                     temporary_path,
                     in_pbf_path,
