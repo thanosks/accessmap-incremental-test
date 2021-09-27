@@ -2,7 +2,7 @@
 name = "incremental"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["Nick Bolten <nbolten@gmai.com>"]
 license = "Apache-2.0"
 
 [tool.poetry.scripts]
