@@ -7,3 +7,6 @@ __pycache__
 
 # Data directories that should not be checked in
 ./output
+
+# Deployment configuration
+accessmap-incremental.env
