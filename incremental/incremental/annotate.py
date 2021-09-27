@@ -32,7 +32,7 @@ def annotate_intersected_gdf(
         index = gdf_in.index[subset & gdf_in.index.isin(joined.index)]
     else:
         index = joined.index
-    gdf_in.loc[index, "crossings_mapped"] = 1
+    gdf_in.loc[index, label] = 1
 
 
 def annotate_crossings(
