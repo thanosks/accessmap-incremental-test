@@ -1,0 +1,126 @@
+version: '3.8'
+
+x-api-config: &api-config
+  env_file: accessmap-incremental.env
+  build:
+    context: https://github.com/accessmap/accessmap-api.git#v0.1.2
+
+x-router-config: &router-config
+  env_file: accessmap-incremental.env
+  build: ./dockerfiles/unweaver
+
+
+services:
+#
+# primary services:
+# `docker-compose up`.
+#
+
+  caddy:
+    env_file: accessmap-incremental.env
+    image: abiosoft/caddy:0.11.5-no-stats
+    restart: unless-stopped
+    volumes:
+      - ./config/caddy/Caddyfile:/etc/Caddyfile
+      - caddy-persist:/root/.caddy
+      - ./build/tiles:/tiles:ro
+      - ./build/webapp:/webapp
+    links:
+      - router
+      - api
+
+  api:
+    <<: *api-config
+    command: poetry run gunicorn --bind 0.0.0.0:5000 'wsgi:build_app(endpoint="/api/v1")'
+    restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+
+  router:
+    <<: *router-config
+    command: poetry run unweaver run /data -h 0.0.0.0 -p 5656
+    restart: unless-stopped
+    volumes:
+      - ./build/router:/data:ro
+
+#
+# "migrate" steps - these run database migrations
+# `docker-compose run migrate_api-db`
+#
+  migrate_api_db:
+    <<: *api-config
+    command: sh -c "poetry run flask db upgrade && poetry run flask db migrate"
+    profiles:
+      - migrate
+
+#
+# "data" steps - run these using the "data" profile to create the input data
+# for the web application. This should be run before the "build" or main
+# stages
+#
+  data_osm_osw:
+    env_file: accessmap-incremental.env
+    build: ./osm_opensidewalks
+    command: bash -c "osm_osw runall /input/config.geojson"
+    environment:
+      - OSM_OSW_WORKDIR=/output
+    volumes:
+        - ./input:/input:ro
+        - ./output:/output:rw
+    profiles:
+      - data
+
+  data_incremental:
+    env_file: accessmap-incremental.env
+    build: ./incremental
+    command: bash -c "incremental crossings /shared/transportation.geojson /shared/transportation-crossings_mapped.geojson /crossings_tasks/* && incremental sidewalks /shared/transportation-crossings-mapped.geojson /shared/transportation-tasks.geojson /sidewalks_tasks/*"
+    volumes:
+        - ./output:/shared:rw
+        - ./input/tasks/crossings:/crossings_tasks:ro
+        - ./input/tasks/sidewalks:/sidewalks_tasks:ro
+    profiles:
+      - data
+
+#
+# "build" steps - run these using the "build" profile to create the assets
+# for AccessMap before running the other services.
+# `docker-compose run build_router && docker-compose run build_tiles && docker-compose run build_webapp`
+#
+  build_router:
+    <<: *router-config
+    command: bash -c "cp -r /inputconfig/* /data && cp -r /inputdata/layers /data/ && poetry run unweaver build /data --changes-sign incline"
+    volumes:
+      - ./config/unweaver:/inputconfig:rw
+      - ./output/transportation-tasks.geojson:/inputdata/layers/transportation.geojson:ro
+      - ./build/router:/data:rw
+    profiles:
+      - build
+
+  build_tiles:
+    env_file: accessmap-incremental.env
+    build: ./dockerfiles/tippecanoe
+    entrypoint: "sh /build_tiles.sh /home/tippecanoe/input /home/tippecanoe/output"
+    volumes:
+      - ./config/tippecanoe/build_tiles.sh:/build_tiles.sh:ro
+      - ./config/tippecanoe/pedestrian-tilejson.json:/home/tippecanoe/pedestrian.json:ro
+      - ./config/tippecanoe/regions-tilejson.json:/home/tippecanoe/regions.json:ro
+      - ./output/transportation-tasks.geojson:/home/tippecanoe/input/transportation.geojson:ro
+      - ./input/config.geojson:/home/tippecanoe/input/regions.geojson:ro
+      - ./build/tiles:/home/tippecanoe/output:rw
+    profiles:
+      - build
+
+  build_webapp:
+    env_file: accessmap-incremental.env
+    build:
+      context: https://github.com/accessmap/accessmap-webapp.git#v1.0.6
+    command: npm run build
+    volumes:
+      - ./build/webapp:/www/public
+      - ./input/config.geojson:/www/regions.json:ro
+    profiles:
+      - build
+
+volumes:
+    caddy-persist:
