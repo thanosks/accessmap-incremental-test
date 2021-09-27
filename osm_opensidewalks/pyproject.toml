@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "osm_opensidewalks"
+name = "osm_osw"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["Nick Bolten <nbolten@gmail.com>"]
 license = "Apache-2.0"
 
 [tool.poetry.scripts]
