@@ -1,5 +1,6 @@
 {
-  "name": "wheelchair",
+  "id": "custom",
+  "name": "custom",
   "args": [
     {
       "name": "avoidCurbs",
@@ -16,8 +17,12 @@
     {
       "name": "timestamp",
       "type": "fields.Integer()"
+    },
+    {
+      "name": "streetAvoidance",
+      "type": "fields.Number(validate=validate.Range(0, 3))"
     }
   ],
-  "cost_function": "cost-wheelchair.py",
-  "directions": "directions-wheelchair.py"
+  "cost_function": "cost-custom.py",
+  "directions": "directions-custom.py"
 }

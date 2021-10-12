@@ -1,7 +1,7 @@
-FROM python:3.6-stretch
+FROM python:3.8-buster
 MAINTAINER Nick Bolten <nbolten@gmail.com>
 
-ARG GIT_HASH="916e63dd3c10d3827133a98bd65bdd67e6692ca8"
+ARG GIT_HASH="702a83a1136ea1a8950927f51e1e435015093c57"
 
 ENV SERVER_PORT=5656
 
@@ -10,7 +10,7 @@ RUN apt-get update && \
       fiona \
       libsqlite3-mod-spatialite
 
-RUN pip install poetry
+RUN pip install poetry==1.1.8
 
 RUN mkdir -p /install
 WORKDIR /install

@@ -1,24 +1,23 @@
 import copy
 
 
-def directions(origin, destination, cost, nodes, edges):
+def directions(status, G, origin, destination, cost, nodes, edges):
     # Extract edge segments and total coordinates of path
     segments = {"type": "FeatureCollection", "features": []}
-    coords = [edges[0]["_geometry"]["coordinates"][0]]
+    coords = [edges[0]["geom"]["coordinates"][0]]
     total_distance = 0
     for edge in edges:
         if "length" in edge:
             total_distance += edge["length"]
         feature = {
             "type": "Feature",
-            "geometry": edge["_geometry"],
+            "geometry": edge["geom"],
             "properties": {
-                k: v
-                for k, v in edge.items() if k != "_geometry" and v is not None
+                k: v for k, v in edge.items() if k != "geom" and v is not None
             },
         }
         segments["features"].append(feature)
-        coords += edge["_geometry"]["coordinates"][1:]
+        coords += edge["geom"]["coordinates"][1:]
 
     # Extract steps information
     track = [
@@ -65,7 +64,7 @@ def path_to_directions(edges, track):
     for edge in edges:
         # TODO: remove? Might be slow point. Profile!
         edge = copy.deepcopy(edge)
-        geometry = edge.pop("_geometry")
+        geometry = edge.pop("geom")
         step = {
             "type": "Feature",
             "geometry": geometry,

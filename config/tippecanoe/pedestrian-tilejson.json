@@ -1,5 +1,5 @@
 {
-  "bounds": [-122.651,47.266,-121.955,48.828],
+  "bounds": [-180,-90,90,180],
   "center": [-122.339,47.604,15],
   "created": 1530442267792,
   "description": "Pedestrian network data",
