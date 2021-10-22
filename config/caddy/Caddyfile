@@ -60,6 +60,7 @@
     }
 
     header /nocontent {
+        Access-Control-Allow-Origin *
         -Content-Type
         -Content-Encoding
     }

@@ -153,21 +153,22 @@ def cost_fun_generator(
         elif highway in STREET_TYPES:
             if highway == "pedestrian":
                 # Pedestrian streets are good, use them with no extra cost
-                street_cost_factor = streetAvoidance
+                # (Using 'abs' to ensure non-negative)
+                street_cost_factor = abs(streetAvoidance + 1)
                 pass
             elif highway == "service":
                 # 10% extra cost for using a service road (includes alleys and
                 # driveways and parking lots)
-                street_cost_factor = 1.1 * streetAvoidance
+                street_cost_factor = 1.1 * (streetAvoidance + 1)
             elif highway == "residential":
                 # It's a residential street and hopefully somewhat accessible.
                 # Apply a 20% street cost
-                street_cost_factor = 1.2 * streetAvoidance
+                street_cost_factor = 1.2 * (streetAvoidance + 1)
             else:
                 # Apply an extra 50% cost for all other roads, which should
                 # be considered potentially unsafe/unreliable due to higher
                 # car traffic volume.
-                street_cost_factor = 1.5 * streetAvoidance
+                street_cost_factor = 1.5 * (streetAvoidance + 1)
         else:
             # Unknown path type: do not use
             return None
