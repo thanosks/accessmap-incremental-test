@@ -37,6 +37,14 @@
     errors stderr
 }
 
+{$HOST}/api/v1/regions {
+    tls {$TLS:off}
+    root /regions
+    header /regions.geojson {
+        Access-Control-Allow-Origin *
+    }
+}
+
 {$HOST}/tiles {
     tls {$TLS:off}
 

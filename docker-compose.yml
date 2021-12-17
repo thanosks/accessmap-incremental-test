@@ -25,6 +25,7 @@ services:
       - caddy-persist:/root/.caddy
       - ./build/tiles:/tiles:ro
       - ./build/webapp:/webapp
+      - ./input/config.geojson:/regions/regions.geojson:ro
     links:
       - router
       - api
