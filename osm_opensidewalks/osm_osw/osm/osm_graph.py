@@ -23,6 +23,29 @@ class WayCounter(osmium.SimpleHandler):
             self.count += 1
 
 
+class WayNodes(osmium.SimpleHandler):
+    def __init__(self, node_filter=None):
+        super().__init__()
+        self.nodes = []
+        if node_filter is None:
+            self.node_filter = lambda n: True
+        else:
+            self.node_filter = node_filter
+
+    def node(self, n):
+        if self.node_filter(n):
+            self.nodes.append(
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [n.lon, n.lat],
+                    },
+                    "properties": {**dict(n.tags), "osm_id": n.id},
+                }
+            )
+
+
 class OSMGraph:
     def __init__(self, G=None):
         if G is not None:

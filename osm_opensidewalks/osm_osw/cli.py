@@ -10,7 +10,7 @@ from .constants import TMP_DIR
 from .dems.transforms import get_ned13_for_bounds, infer_incline, list_ned13s
 from .dems.mask_dem import count_buildings, extract_buildings, mask_dem
 from .osm.osm_clip import osm_clip
-from .osm.osm_graph import OSMGraph, WayCounter
+from .osm.osm_graph import OSMGraph, WayCounter, WayNodes
 from .osm.fetch import osm_fetch
 from .osw.osw_normalizer import OSWNormalizer
 from .schemas.config_schema import ConfigSchema
@@ -61,7 +61,8 @@ def clip(config: str, workdir: str) -> None:
 @osm_osw.command()
 @click.argument("config", type=click.Path())
 @click.option("--workdir", envvar="OSM_OSW_WORKDIR", default=TMP_DIR)
-def network(config: str, workdir: str) -> None:
+@click.option("-s/-ns", "--simplify/--no_simplify", default=True)
+def network(config: str, workdir: str, simplify: bool) -> None:
     config = ConfigSchema.dict_from_filepath(config)
 
     def opensidewalks_filter(tags):
@@ -86,8 +87,9 @@ def network(config: str, workdir: str) -> None:
                 progressbar=pbar,
             )
 
-        click.echo(f"Joining degree-2 nodes for {region_id}...")
-        OG.simplify()
+        if simplify:
+            click.echo(f"Joining degree-2 nodes for {region_id}...")
+            OG.simplify()
 
         with click.progressbar(
             length=len(OG.G.edges),
@@ -99,6 +101,30 @@ def network(config: str, workdir: str) -> None:
         OG.to_geojson(graph_path)
 
         click.echo(f"Created network from clipped {region_id} region.")
+
+
+@osm_osw.command()
+@click.argument("config", type=click.Path())
+@click.option("--workdir", envvar="OSM_OSW_WORKDIR", default=TMP_DIR)
+def extract_nodes(config: str, workdir: str) -> None:
+    config = ConfigSchema.dict_from_filepath(config)
+
+    for region in config["features"]:
+        region_id = region["properties"]["id"]
+        clipped_path = Path(workdir, f"{region_id}.osm.pbf")
+
+        # TODO: add a progressbar
+        click.echo(f"Counting network ways in {region_id}...")
+        # TODO: include node filter to extract only nodes fitting the OSW
+        # schema
+        nodes = WayNodes(clipped_path)
+        nodes_fc = {"type": "FeatureCollection", "features": nodes}
+
+        nodes_path = Path(workdir, f"{region_id}.nodes.geojson")
+        with open(nodes_path, "w") as f:
+            json.dump(f, nodes_fc)
+
+        click.echo(f"Extracte nodes from clipped {region_id} region.")
 
 
 @osm_osw.command()
