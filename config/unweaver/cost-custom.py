@@ -127,7 +127,6 @@ def cost_fun_generator(
                 # Pedestrian streets are good, use them with no extra cost
                 # (Using 'abs' to ensure non-negative)
                 street_cost_factor = abs(streetAvoidance + 1)
-                pass
             elif highway == "service":
                 # 10% extra cost for using a service road (includes alleys and
                 # driveways and parking lots)
@@ -146,7 +145,7 @@ def cost_fun_generator(
             return None
 
         # Handle all other ways as incline-having features
-        if "incline" in d:
+        if "incline" in d and d["incline"] is not None:
             incline = float(d["incline"])
 
             # Decrease speed based on incline
