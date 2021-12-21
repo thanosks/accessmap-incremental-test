@@ -90,21 +90,18 @@ def cost_fun_generator(
         highway = d["highway"]
 
         if highway == "footway":
-            if "footway" in d:
-                if d["footway"] == "crossing":
-                    if avoidCurbs:
-                        if "curbramps" in d:
-                            if not d["curbramps"]:
-                                return None
-                        else:
-                            # TODO: Make this user-configurable - we assume no
-                            # curb ramps by default now
+            if d.get("footway") == "crossing":
+                # Is a crossing
+                if avoidCurbs:
+                    if "curbramps" in d:
+                        if not d["curbramps"]:
                             return None
-                    # Add delay for crossing street
-                    # TODO: tune this based on street type crossed and/or
-                    # markings.
-                    time += 30
-                elif d.get("elevator", False):
+                    else:
+                        return None
+                time += 30
+            else:
+                if d.get("elevator", False):
+                    # Path includes an elevator
                     opening_hours = d["opening_hours"]
                     # Add delay for using the elevator
                     time += 45
@@ -124,32 +121,7 @@ def cost_fun_generator(
                         # message back?
                         return None
                 else:
-                    # Handle all other footways the same
-
-                    # FIXME: this data should be float to begin with
-                    if "incline" in d:
-                        incline = float(d["incline"])
-
-                        # Decrease speed based on incline
-                        if length > 3:
-                            # If the path is very short, ignore incline due to
-                            # likelihood that it is incorrectly estimated.
-                            if (incline > uphill) or (incline < -downhill):
-                                return None
-                        if incline > INCLINE_IDEAL:
-                            speed = tobler(
-                                incline,
-                                k=k_up,
-                                m=INCLINE_IDEAL,
-                                base=base_speed,
-                            )
-                        else:
-                            speed = tobler(
-                                incline,
-                                k=k_down,
-                                m=INCLINE_IDEAL,
-                                base=base_speed,
-                            )
+                    pass
         elif highway in STREET_TYPES:
             if highway == "pedestrian":
                 # Pedestrian streets are good, use them with no extra cost
@@ -172,6 +144,31 @@ def cost_fun_generator(
         else:
             # Unknown path type: do not use
             return None
+
+        # Handle all other ways as incline-having features
+        if "incline" in d:
+            incline = float(d["incline"])
+
+            # Decrease speed based on incline
+            if length > 3:
+                # If the path is very short, ignore incline due to
+                # likelihood that it is incorrectly estimated.
+                if (incline > uphill) or (incline < -downhill):
+                    return None
+            if incline > INCLINE_IDEAL:
+                speed = tobler(
+                    incline,
+                    k=k_up,
+                    m=INCLINE_IDEAL,
+                    base=base_speed,
+                )
+            else:
+                speed = tobler(
+                    incline,
+                    k=k_down,
+                    m=INCLINE_IDEAL,
+                    base=base_speed,
+                )
 
         # Initial time estimate (in seconds) - based on speed
         time += length / speed

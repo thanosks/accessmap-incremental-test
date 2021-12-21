@@ -158,28 +158,34 @@ class OSMGraph:
             # Sort by segment number
             sorted_node_data = list(sorted(node_data, key=lambda x: x[3]))
 
-            # Group by neighboring segments
-            groups = {}
-            last_s = -10
-            for ni, n, no, s in sorted_node_data:
-                if (s - last_s) != 1:
-                    # The last segment and this segment are not neighbors -
-                    # create new group
-                    receiving_edge = (ni, n)
-                    groups[receiving_edge] = []
-                groups[receiving_edge].append(n)
-                last_s = s
+            # Split into lists of neighboring nodes
+            neighbors_list = []
+
+            neighbors = [sorted_node_data.pop(0)]
+            for node_in, node, node_out, segment_n in sorted_node_data:
+                if (segment_n - neighbors[-1][3]) != 1:
+                    # Not neighbors!
+                    neighbors_list.append(neighbors)
+                    neighbors = [(node_in, node, node_out, segment_n)]
+                else:
+                    # Neighbors!
+                    neighbors.append((node_in, node, node_out, segment_n))
+            neighbors_list.append(neighbors)
 
             # Remove internal nodes by group
-            for (u, v), nodes in groups.items():
+            for neighbors in neighbors_list:
+                u, v, w, segment_n = neighbors[0]
                 edge_data = self.G[u][v][0]
                 ndref = edge_data["ndref"]
-                for node in nodes:
-                    # Append following to ndref
-                    following_node = next(self.G.successors(node))
-                    ndref.append(following_node)
-                    self.G.remove_edge(node, following_node)
-                self.G.add_edges_from([(u, node, edge_data)])
+                self.G.remove_edge(u, v)
+                for node_in, node, node_out, segment_n in neighbors:
+                    ndref.append(node_out)
+                    # Remove intervening edge
+                    try:
+                        self.G.remove_edge(node, node_out)
+                    except nx.exception.NetworkXError:
+                        pass
+                self.G.add_edges_from([(u, node_out, edge_data)])
 
     def construct_geometries(self, progressbar=None):
         """Given the current list of node references per edge, construct
