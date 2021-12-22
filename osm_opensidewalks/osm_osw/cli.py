@@ -14,6 +14,7 @@ from .osm.osm_graph import OSMGraph, NodeCounter, WayCounter
 from .osm.fetch import osm_fetch
 from .osw.osw_normalizer import OSWWayNormalizer, OSWNodeNormalizer
 from .schemas.config_schema import ConfigSchema
+from .inference.curb_ramps import infer_curbramps as infer_osm_curbramps
 
 
 @click.group()
@@ -148,6 +149,28 @@ def mask(config: str, workdir: str) -> None:
 @osm_osw.command()
 @click.argument("config", type=click.Path())
 @click.option("--workdir", envvar="OSM_OSW_WORKDIR", default=TMP_DIR)
+def infer_curbramps(config: str, workdir: str) -> None:
+    config = ConfigSchema.dict_from_filepath(config)
+
+    # Infer inclines
+    for region in config["features"]:
+        region_id = region["properties"]["id"]
+
+        graph_nodes_path = Path(workdir, f"{region_id}.graph.nodes.geojson")
+        graph_edges_path = Path(workdir, f"{region_id}.graph.edges.geojson")
+
+        OG = OSMGraph.from_geojson(graph_nodes_path, graph_edges_path)
+        with click.progressbar(
+            length=len(OG.G.edges),
+            label=f"Inferring curbramps for {region_id}",
+        ) as bar:
+            infer_osm_curbramps(OG, progressbar=bar)
+        OG.to_geojson(graph_nodes_path, graph_edges_path)
+
+
+@osm_osw.command()
+@click.argument("config", type=click.Path())
+@click.option("--workdir", envvar="OSM_OSW_WORKDIR", default=TMP_DIR)
 def incline(config: str, workdir: str) -> None:
     config = ConfigSchema.dict_from_filepath(config)
 
@@ -196,7 +219,7 @@ def merge(config: str, workdir: str) -> None:
 
     for region in config["features"]:
         region_id = region["properties"]["id"]
-        graph_geojson_path = Path(workdir, f"{region_id}.graph.geojson")
+        graph_geojson_path = Path(workdir, f"{region_id}.graph.edges.geojson")
 
         with open(graph_geojson_path) as f:
             region_fc = json.load(f)
@@ -215,6 +238,7 @@ def runall(ctx: click.Context, config: str, workdir: str) -> None:
     ctx.forward(fetch)
     ctx.forward(clip)
     ctx.forward(network)
+    ctx.forward(infer_curbramps)
     ctx.forward(mask)
     ctx.forward(incline)
     ctx.forward(merge)

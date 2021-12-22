@@ -24,6 +24,29 @@ tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)"
 tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins"]
 
 [[package]]
+name = "black"
+version = "21.12b0"
+description = "The uncompromising code formatter."
+category = "dev"
+optional = false
+python-versions = ">=3.6.2"
+
+[package.dependencies]
+click = ">=7.1.2"
+mypy-extensions = ">=0.4.3"
+pathspec = ">=0.9.0,<1"
+platformdirs = ">=2"
+tomli = ">=0.2.6,<2.0.0"
+typing-extensions = ">=3.10.0.0"
+
+[package.extras]
+colorama = ["colorama (>=0.4.3)"]
+d = ["aiohttp (>=3.7.4)"]
+jupyter = ["ipython (>=7.8.0)", "tokenize-rt (>=3.2.0)"]
+python2 = ["typed-ast (>=1.4.3)"]
+uvloop = ["uvloop (>=0.15.2)"]
+
+[[package]]
 name = "certifi"
 version = "2021.5.30"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -112,6 +135,14 @@ lint = ["mypy (==0.910)", "flake8 (==3.9.2)", "flake8-bugbear (==21.4.3)", "pre-
 tests = ["pytest", "pytz", "simplejson"]
 
 [[package]]
+name = "mypy-extensions"
+version = "0.4.3"
+description = "Experimental type system extensions for programs checked with the mypy typechecker."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "networkx"
 version = "2.6.3"
 description = "Python package for creating and manipulating graphs and networks"
@@ -144,6 +175,41 @@ python-versions = ">=3.4"
 
 [package.dependencies]
 requests = "*"
+
+[[package]]
+name = "pathspec"
+version = "0.9.0"
+description = "Utility library for gitignore style pattern matching of file paths."
+category = "dev"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+
+[[package]]
+name = "platformdirs"
+version = "2.4.0"
+description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+docs = ["Sphinx (>=4)", "furo (>=2021.7.5b38)", "proselint (>=0.10.2)", "sphinx-autodoc-typehints (>=1.12)"]
+test = ["appdirs (==1.4.4)", "pytest (>=6)", "pytest-cov (>=2.7)", "pytest-mock (>=3.6)"]
+
+[[package]]
+name = "pygeos"
+version = "0.12.0"
+description = "GEOS wrapped in numpy ufuncs"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+numpy = ">=1.13"
+
+[package.extras]
+docs = ["sphinx", "numpydoc"]
+test = ["pytest"]
 
 [[package]]
 name = "pyparsing"
@@ -248,6 +314,22 @@ pyparsing = ">=2.1.6"
 test = ["pytest", "hypothesis"]
 
 [[package]]
+name = "tomli"
+version = "1.2.3"
+description = "A lil' TOML parser"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
+name = "typing-extensions"
+version = "4.0.1"
+description = "Backported and Experimental Type Hints for Python 3.6+"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
 name = "urllib3"
 version = "1.26.6"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -260,10 +342,18 @@ brotli = ["brotlipy (>=0.6.0)"]
 secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "ipaddress"]
 socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
+[[package]]
+name = "utm"
+version = "0.7.0"
+description = "Bidirectional UTM-WGS84 converter for python"
+category = "main"
+optional = false
+python-versions = "*"
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8,<3.10"
-content-hash = "c110fc6d12c802e0ea62887cf14504ced744c0667bab9183b23f2eb9a176327c"
+content-hash = "ffa938cb27350b825bac0b5fc4817924e2c63fb4ad2d0bd7bfcc375facf11f74"
 
 [metadata.files]
 affine = [
@@ -273,6 +363,10 @@ affine = [
 attrs = [
     {file = "attrs-21.2.0-py2.py3-none-any.whl", hash = "sha256:149e90d6d8ac20db7a955ad60cf0e6881a3f20d37096140088356da6c716b0b1"},
     {file = "attrs-21.2.0.tar.gz", hash = "sha256:ef6aaac3ca6cd92904cdd0d83f629a15f18053ec84e6432106f7a4d04ae4f5fb"},
+]
+black = [
+    {file = "black-21.12b0-py3-none-any.whl", hash = "sha256:a615e69ae185e08fdd73e4715e260e2479c861b5740057fde6e8b4e3b7dd589f"},
+    {file = "black-21.12b0.tar.gz", hash = "sha256:77b80f693a569e2e527958459634f18df9b0ba2625ba4e0c2d5da5be42e6f2b3"},
 ]
 certifi = [
     {file = "certifi-2021.5.30-py2.py3-none-any.whl", hash = "sha256:50b1e4f8446b06f41be7dd6338db18e0990601dce795c2b1686458aa7e8fa7d8"},
@@ -305,6 +399,10 @@ idna = [
 marshmallow = [
     {file = "marshmallow-3.13.0-py2.py3-none-any.whl", hash = "sha256:dd4724335d3c2b870b641ffe4a2f8728a1380cd2e7e2312756715ffeaa82b842"},
     {file = "marshmallow-3.13.0.tar.gz", hash = "sha256:c67929438fd73a2be92128caa0325b1b5ed8b626d91a094d2f7f2771bf1f1c0e"},
+]
+mypy-extensions = [
+    {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
+    {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
 ]
 networkx = [
     {file = "networkx-2.6.3-py3-none-any.whl", hash = "sha256:80b6b89c77d1dfb64a4c7854981b60aeea6360ac02c6d4e4913319e0a313abef"},
@@ -357,6 +455,50 @@ osmium = [
     {file = "osmium-3.2.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:b94b3c792a8f148e654f838382f4c5fb34eeea5dd13c2ebc34f5ce43c4744956"},
     {file = "osmium-3.2.0-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:36e2fec6ef00f0c13ec81cdb13b1d70a8d8a9a61094ea08b2a448f98bb62a6e2"},
     {file = "osmium-3.2.0.tar.gz", hash = "sha256:eb6d42a550997bbe1de12d6a1747d51ddc26c7d3118c6d22159703efa57c9d5a"},
+]
+pathspec = [
+    {file = "pathspec-0.9.0-py2.py3-none-any.whl", hash = "sha256:7d15c4ddb0b5c802d161efc417ec1a2558ea2653c2e8ad9c19098201dc1c993a"},
+    {file = "pathspec-0.9.0.tar.gz", hash = "sha256:e564499435a2673d586f6b2130bb5b95f04a3ba06f81b8f895b651a3c76aabb1"},
+]
+platformdirs = [
+    {file = "platformdirs-2.4.0-py3-none-any.whl", hash = "sha256:8868bbe3c3c80d42f20156f22e7131d2fb321f5bc86a2a345375c6481a67021d"},
+    {file = "platformdirs-2.4.0.tar.gz", hash = "sha256:367a5e80b3d04d2428ffa76d33f124cf11e8fff2acdaa9b43d545f5c7d661ef2"},
+]
+pygeos = [
+    {file = "pygeos-0.12.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:e3593360f1a93d2a6fe1ea75fa84882186bd3851d187e4c4bbb586495c748e3d"},
+    {file = "pygeos-0.12.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:ec4112b69823866fa966ec4869e1b51b6560d892c65c20b3fb065266519046e2"},
+    {file = "pygeos-0.12.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:75b5b0aefffb6b7747df299414df4f2e160e3a8993d2b6a86b805fb5b0196f13"},
+    {file = "pygeos-0.12.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:26fae3eabb83a15348c2c3f78892114aca9bc4efaa342ab2fa3fa39a85e05dc5"},
+    {file = "pygeos-0.12.0-cp310-cp310-win_amd64.whl", hash = "sha256:b4ec8fe577ca7ba6dd046481cdb736f99961216fcb54c84211287a10d1158459"},
+    {file = "pygeos-0.12.0-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:6db68dc4583c88222d32cc624622234a97080b3c4650f0c0e12987664d49f374"},
+    {file = "pygeos-0.12.0-cp36-cp36m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:da856315a4047d581300d860dd2aa01438e64121570bed46c81ad0a90f477db0"},
+    {file = "pygeos-0.12.0-cp36-cp36m-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:3cf6d734aea07f04c7644ae24e303a447e96ea123ea524ab309e492ca683240e"},
+    {file = "pygeos-0.12.0-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:12e06ec4417453f1a95d36b8ba8822569c30f6938dd4a7bac97433cab641b61f"},
+    {file = "pygeos-0.12.0-cp36-cp36m-win32.whl", hash = "sha256:ea7f3ea9c76f8c94ed9b360b4d6249c44d5bc48c8db5cb3a5d4b017e51d1bd8a"},
+    {file = "pygeos-0.12.0-cp36-cp36m-win_amd64.whl", hash = "sha256:a6cf496887f25b99427624399bcd07107660e6f9135466c33dc60ad9bd4c9ebe"},
+    {file = "pygeos-0.12.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:f155f268676ff7b20a553a542a436be0f8df14233c873facc80214d836d6463b"},
+    {file = "pygeos-0.12.0-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f74abd81487839532c7110721f3b1450d0c6bcfb5e18c45d604ddeb75ec99f86"},
+    {file = "pygeos-0.12.0-cp37-cp37m-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:6ac4ddfbe548d8a3e93732577b8a6d4df071f038338f6c400466b3c2bfe3dc78"},
+    {file = "pygeos-0.12.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:504a03330147d2bb3309f291f4333db892cdba40a66ac4f3db8a2672dff7cf4f"},
+    {file = "pygeos-0.12.0-cp37-cp37m-win32.whl", hash = "sha256:e3bcfb55e966aea26ff8e9b8fd314cee618c363f639e83b1eaaefb66bc97e7b0"},
+    {file = "pygeos-0.12.0-cp37-cp37m-win_amd64.whl", hash = "sha256:835b7b1b2ef44453ff9d759dd67ee17fb89a52d8cdbd4d1655bf0be6ccfd90c3"},
+    {file = "pygeos-0.12.0-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:60d103b4c099940ad73f0b193f65dfc77f957646451b8a399e4f1f5835c57ab6"},
+    {file = "pygeos-0.12.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:5bc1b9a548848f9c69c913eca8ab0bb9164b35a28da51f86fcc0887c553bd863"},
+    {file = "pygeos-0.12.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:11cb186f6cb9a2453a990a3e9894f861d308c574170d1c6f55a598cb11b87579"},
+    {file = "pygeos-0.12.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b8fcb175645f57d7a6fa153a1582f9dbf625bb69c55267207b1bc8d2b983013b"},
+    {file = "pygeos-0.12.0-cp38-cp38-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:2453c07c9b8a24054f897ed56e8046c7dd743939f7f5d6637fdeafdccc411f29"},
+    {file = "pygeos-0.12.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:962df97f937d6656ce9293e7072318e99860b0d41f61df9017551855a8bc188e"},
+    {file = "pygeos-0.12.0-cp38-cp38-win32.whl", hash = "sha256:d72e3691e47f44b49d3a23f05bb55eca34ed28b0e7b1b4aeb50207a95ae83f8f"},
+    {file = "pygeos-0.12.0-cp38-cp38-win_amd64.whl", hash = "sha256:41119e394ea90bf8f697613f530cf92c77ab98346c19cb19beba33a82fd5b91d"},
+    {file = "pygeos-0.12.0-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:dfad4c0a4b60861f8e571ca409ce128859d26e1ac26a15ee071cf1f222431fdd"},
+    {file = "pygeos-0.12.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:aeaf1f9ae45cf35a25ccdeb2b083e057b31d98cf9351bfc42a59352130ff5c31"},
+    {file = "pygeos-0.12.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:59971b44e3b8f61e96b159acdc5f9347b94766a4efb94af7b926b1c4958b60d4"},
+    {file = "pygeos-0.12.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:efcbd52e5602d758b1ff42e67b91b33b1599667b478d0be9c13e17b286cbfcf0"},
+    {file = "pygeos-0.12.0-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:47e7b2614d8982f841e33cc1f18d39b7a654d4d7958d456e4765ff4a9c76589b"},
+    {file = "pygeos-0.12.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1f045632a940905c2f380544450bbcd48556b529bdfb9320aac777d90990fc25"},
+    {file = "pygeos-0.12.0-cp39-cp39-win32.whl", hash = "sha256:d2fefb3a9cf96d1ee4841772464e82b2ae3a8ddf3caf14ecb04c5fcdae6a7248"},
+    {file = "pygeos-0.12.0-cp39-cp39-win_amd64.whl", hash = "sha256:25b94e8bc755a8d3e50661995556b2c27d253bfdd55aa719ea3c202de44a9569"},
+    {file = "pygeos-0.12.0.tar.gz", hash = "sha256:3c41542ef67c66015f443ae3e6e683503a8a221f9c24fb2380f6ae42aed1600a"},
 ]
 pyparsing = [
     {file = "pyparsing-2.4.7-py2.py3-none-any.whl", hash = "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"},
@@ -455,7 +597,18 @@ snuggs = [
     {file = "snuggs-1.4.7-py3-none-any.whl", hash = "sha256:988dde5d4db88e9d71c99457404773dabcc7a1c45971bfbe81900999942d9f07"},
     {file = "snuggs-1.4.7.tar.gz", hash = "sha256:501cf113fe3892e14e2fee76da5cd0606b7e149c411c271898e6259ebde2617b"},
 ]
+tomli = [
+    {file = "tomli-1.2.3-py3-none-any.whl", hash = "sha256:e3069e4be3ead9668e21cb9b074cd948f7b3113fd9c8bba083f48247aab8b11c"},
+    {file = "tomli-1.2.3.tar.gz", hash = "sha256:05b6166bff487dc068d322585c7ea4ef78deed501cc124060e0f238e89a9231f"},
+]
+typing-extensions = [
+    {file = "typing_extensions-4.0.1-py3-none-any.whl", hash = "sha256:7f001e5ac290a0c0401508864c7ec868be4e701886d5b573a9528ed3973d9d3b"},
+    {file = "typing_extensions-4.0.1.tar.gz", hash = "sha256:4ca091dea149f945ec56afb48dae714f21e8692ef22a395223bcd328961b6a0e"},
+]
 urllib3 = [
     {file = "urllib3-1.26.6-py2.py3-none-any.whl", hash = "sha256:39fb8672126159acb139a7718dd10806104dec1e2f0f6c88aab05d17df10c8d4"},
     {file = "urllib3-1.26.6.tar.gz", hash = "sha256:f57b4c16c62fa2760b7e3d97c35b255512fb6b59a259730f36ba32ce9f8e342f"},
+]
+utm = [
+    {file = "utm-0.7.0.tar.gz", hash = "sha256:3c9a3650e98bb6eecec535418d0dfd4db8f88c8ceaca112a0ff0787e116566e2"},
 ]
