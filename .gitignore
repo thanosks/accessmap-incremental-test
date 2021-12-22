@@ -6,7 +6,7 @@ __pycache__
 *.swp
 
 # Data directories that should not be checked in
-./output
+output
 build
 
 # Deployment configuration
