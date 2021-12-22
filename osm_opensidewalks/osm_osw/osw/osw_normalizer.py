@@ -1,4 +1,12 @@
-class OSWNormalizer:
+class OSWWayNormalizer:
+    ROAD_HIGHWAY_VALUES = (
+        "primary",
+        "secondary",
+        "tertiary",
+        "residential",
+        "service",
+    )
+
     def __init__(self, tags):
         self.tags = tags
 
@@ -85,10 +93,35 @@ class OSWNormalizer:
         return self.tags.get("highway", "") == "footway"
 
     def is_road(self):
-        return self.tags.get("highway", "") in (
-            "primary",
-            "secondary",
-            "tertiary",
-            "residential",
-            "service",
-        )
+        return self.tags.get("highway", "") in self.ROAD_HIGHWAY_VALUES
+
+
+class OSWNodeNormalizer:
+    KERB_VALUES = ("flush", "lowered", "rolled", "raised")
+
+    def __init__(self, tags):
+        self.tags = tags
+
+    def filter(self):
+        return self.is_kerb()
+
+    def normalize(self):
+        if self.is_kerb():
+            return self._normalize_kerb()
+        else:
+            raise ValueError("This is an invalid node")
+
+    def _normalize_kerb(self):
+        if "barrier" in self.tags:
+            del self.tags["barrier"]
+
+        keep_keys = ["kerb", "tactile_surface"]
+        new_tags = {}
+        for tag in keep_keys:
+            if tag in self.tags:
+                new_tags[tag] = self.tags[tag]
+
+        return new_tags
+
+    def is_kerb(self):
+        return self.tags.get("kerb", "") in self.KERB_VALUES

@@ -4,46 +4,115 @@ import json
 import networkx as nx
 import osmium
 import pyproj
-from shapely.geometry import LineString, mapping, shape
+from shapely.geometry import LineString, Point, mapping, shape
 
-from ..osw.osw_normalizer import OSWNormalizer
+from ..osw.osw_normalizer import OSWWayNormalizer, OSWNodeNormalizer
+
+
+class NodeCounter(osmium.SimpleHandler):
+    def __init__(self):
+        super().__init__()
+        self.count = 0
+
+    def node(self, n):
+        self.count += 1
 
 
 class WayCounter(osmium.SimpleHandler):
-    def __init__(self, way_filter=None):
+    def __init__(self):
         super().__init__()
         self.count = 0
+
+    def way(self, w):
+        self.count += 1
+
+
+class OSMWayParser(osmium.SimpleHandler):
+    def __init__(self, way_filter, progressbar=None):
+        osmium.SimpleHandler.__init__(self)
+        self.G = nx.MultiDiGraph()
         if way_filter is None:
             self.way_filter = lambda w: True
         else:
             self.way_filter = way_filter
+        self.progressbar = progressbar
 
     def way(self, w):
-        if self.way_filter(w.tags):
-            self.count += 1
+        if self.progressbar:
+            self.progressbar.update(1)
+
+        if not self.way_filter(w.tags):
+            if self.progressbar:
+                self.progressbar.update(1)
+            return
+
+        d = {"osm_id": int(w.id)}
+
+        tags = dict(w.tags)
+
+        d2 = {**d, **OSWWayNormalizer(tags).normalize()}
+
+        for i in range(len(w.nodes) - 1):
+            u = w.nodes[i]
+            v = w.nodes[i + 1]
+
+            # NOTE: why are the coordinates floats? Wouldn't fixed
+            # precision be better?
+            u_ref = int(u.ref)
+            u_lon = float(u.lon)
+            u_lat = float(u.lat)
+            v_ref = int(v.ref)
+            v_lon = float(v.lon)
+            v_lat = float(v.lat)
+
+            d3 = {**d2}
+            d3["segment"] = i
+            d3["ndref"] = [u_ref, v_ref]
+            self.G.add_edges_from([(u_ref, v_ref, d3)])
+            self.G.add_node(u_ref, lon=u_lon, lat=u_lat)
+            self.G.add_node(v_ref, lon=v_lon, lat=v_lat)
+            # FIXME: osmium thinks we're keeping the way reference and
+            # raises an exception if we don't delete these references,
+            # but we're not actually keeping any references?
+            del u
+            del v
+
+        del w
 
 
-class WayNodes(osmium.SimpleHandler):
-    def __init__(self, node_filter=None):
-        super().__init__()
-        self.nodes = []
+class OSMWayNodeParser(osmium.SimpleHandler):
+    def __init__(self, G, node_filter=None, progressbar=None):
+        """
+
+        :param G: MultiDiGraph that already has ways inserted as edges.
+        :type G: nx.MultiDiGraph
+
+        """
+        osmium.SimpleHandler.__init__(self)
+        self.G = G
         if node_filter is None:
-            self.node_filter = lambda n: True
+            self.node_filter = lambda w: True
         else:
             self.node_filter = node_filter
+        self.progressbar = progressbar
 
     def node(self, n):
-        if self.node_filter(n):
-            self.nodes.append(
-                {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [n.lon, n.lat],
-                    },
-                    "properties": {**dict(n.tags), "osm_id": n.id},
-                }
-            )
+        if self.progressbar:
+            self.progressbar.update(1)
+
+        if not self.node_filter(n.tags):
+            return
+
+        if n.id not in self.G.nodes:
+            return
+
+        d = {"osm_id": int(n.id)}
+
+        tags = dict(n.tags)
+
+        d2 = {**d, **OSWNodeNormalizer(tags).normalize()}
+
+        self.G.add_node(n.id, **d2)
 
 
 class OSMGraph:
@@ -55,61 +124,18 @@ class OSMGraph:
         self.geod = pyproj.Geod(ellps="WGS84")
 
     @classmethod
-    def from_pbf(self, pbf, way_filter=None, progressbar=None):
-        class OSMParser(osmium.SimpleHandler):
-            def __init__(self):
-                osmium.SimpleHandler.__init__(self)
-                self.G = nx.MultiDiGraph()
-                if way_filter is None:
-                    self.way_filter = lambda w: True
-                else:
-                    self.way_filter = way_filter
+    def from_pbf(
+        self, pbf, way_filter=None, node_filter=None, progressbar=None
+    ):
+        way_parser = OSMWayParser(way_filter, progressbar=progressbar)
+        way_parser.apply_file(pbf, locations=True)
+        G = way_parser.G
+        del way_parser
 
-            def way(self, w):
-                if not self.way_filter(w.tags):
-                    return
-
-                d = {"osm_id": int(w.id)}
-
-                tags = dict(w.tags)
-
-                d2 = {**d, **OSWNormalizer(tags).normalize()}
-
-                for i in range(len(w.nodes) - 1):
-                    u = w.nodes[i]
-                    v = w.nodes[i + 1]
-
-                    # NOTE: why are the coordinates floats? Wouldn't fixed
-                    # precision be better?
-                    u_ref = int(u.ref)
-                    u_lon = float(u.lon)
-                    u_lat = float(u.lat)
-                    v_ref = int(v.ref)
-                    v_lon = float(v.lon)
-                    v_lat = float(v.lat)
-
-                    d3 = {**d2}
-                    d3["segment"] = i
-                    d3["ndref"] = [u_ref, v_ref]
-                    self.G.add_edges_from([(u_ref, v_ref, d3)])
-                    self.G.add_node(u_ref, lon=u_lon, lat=u_lat)
-                    self.G.add_node(v_ref, lon=v_lon, lat=v_lat)
-                    # FIXME: osmium thinks we're keeping the way reference and
-                    # raises an exception if we don't delete these references,
-                    # but we're not actually keeping any references?
-                    del u
-                    del v
-
-                del w
-                if progressbar:
-                    progressbar.update(1)
-
-        parser = OSMParser()
-        parser.apply_file(pbf, locations=True)
-
-        G = parser.G
-
-        del parser
+        node_parser = OSMWayNodeParser(G, node_filter, progressbar=progressbar)
+        node_parser.apply_file(pbf)
+        G = node_parser.G
+        del node_parser
 
         return OSMGraph(G)
 
@@ -206,6 +232,13 @@ class OSMGraph:
             if progressbar:
                 progressbar.update(1)
 
+        for n, d in self.G.nodes(data=True):
+            coords = []
+            geometry = Point(d["lon"], d["lat"])
+            d["geometry"] = geometry
+            if progressbar:
+                progressbar.update(1)
+
         # FIXME: remove orphaned nodes!
 
     def to_undirected(self):
@@ -248,35 +281,59 @@ class OSMGraph:
     def is_directed(self):
         return self.G.is_directed()
 
-    def to_geojson(self, path):
-        fc = {"type": "FeatureCollection", "features": []}
+    def to_geojson(self, nodes_path, edges_path):
+        edge_features = []
         for u, v, d in self.G.edges(data=True):
             d_copy = {**d}
             d_copy["_u"] = u
             d_copy["_v"] = v
             geometry = mapping(d_copy.pop("geometry"))
 
-            fc["features"].append(
+            edge_features.append(
                 {"type": "Feature", "geometry": geometry, "properties": d_copy}
             )
+        edges_fc = {"type": "FeatureCollection", "features": edge_features}
 
-        with open(path, "w") as f:
-            json.dump(fc, f)
+        node_features = []
+        for n, d in self.G.nodes(data=True):
+            d_copy = {**d}
+            d_copy["_n"] = n
+            geometry = mapping(d_copy.pop("geometry"))
+
+            node_features.append(
+                {"type": "Feature", "geometry": geometry, "properties": d_copy}
+            )
+        nodes_fc = {"type": "FeatureCollection", "features": node_features}
+
+        with open(edges_path, "w") as f:
+            json.dump(edges_fc, f)
+
+        with open(nodes_path, "w") as f:
+            json.dump(nodes_fc, f)
 
     @classmethod
-    def from_geojson(cls, path):
-        with open(path) as f:
-            fc = json.load(f)
+    def from_geojson(cls, nodes_path, edges_path):
+        with open(nodes_path) as f:
+            nodes_fc = json.load(f)
+
+        with open(edges_path) as f:
+            edges_fc = json.load(f)
 
         G = nx.MultiDiGraph()
         osm_graph = cls(G=G)
 
-        for feature in fc["features"]:
-            props = feature["properties"]
+        for node_feature in nodes_fc["features"]:
+            props = node_feature["properties"]
+            n = props.pop("_n")
+            props["geometry"] = shape(node_feature["geometry"])
+            G.add_node(n, **props)
+
+        for edge_feature in edges_fc["features"]:
+            props = edge_feature["properties"]
             u = props.pop("_u")
             v = props.pop("_v")
 
-            props["geometry"] = shape(feature["geometry"])
+            props["geometry"] = shape(edge_feature["geometry"])
 
             G.add_edge(u, v, **props)
 

@@ -10,9 +10,9 @@ from .constants import TMP_DIR
 from .dems.transforms import get_ned13_for_bounds, infer_incline, list_ned13s
 from .dems.mask_dem import count_buildings, extract_buildings, mask_dem
 from .osm.osm_clip import osm_clip
-from .osm.osm_graph import OSMGraph, WayCounter, WayNodes
+from .osm.osm_graph import OSMGraph, NodeCounter, WayCounter
 from .osm.fetch import osm_fetch
-from .osw.osw_normalizer import OSWNormalizer
+from .osw.osw_normalizer import OSWWayNormalizer, OSWNodeNormalizer
 from .schemas.config_schema import ConfigSchema
 
 
@@ -65,8 +65,12 @@ def clip(config: str, workdir: str) -> None:
 def network(config: str, workdir: str, simplify: bool) -> None:
     config = ConfigSchema.dict_from_filepath(config)
 
-    def opensidewalks_filter(tags):
-        normalizer = OSWNormalizer(tags)
+    def opensidewalks_way_filter(tags):
+        normalizer = OSWWayNormalizer(tags)
+        return normalizer.filter()
+
+    def opensidewalks_node_filter(tags):
+        normalizer = OSWNodeNormalizer(tags)
         return normalizer.filter()
 
     for region in config["features"]:
@@ -75,15 +79,18 @@ def network(config: str, workdir: str, simplify: bool) -> None:
 
         # TODO: add a progressbar
         click.echo(f"Counting network ways in {region_id}...")
-        way_counter = WayCounter(opensidewalks_filter)
+        way_counter = WayCounter()
         way_counter.apply_file(str(clipped_path))
+        node_counter = NodeCounter()
+        node_counter.apply_file(str(clipped_path))
         with click.progressbar(
-            length=way_counter.count,
+            length=way_counter.count + node_counter.count,
             label=f"Importing ways for {region_id}...",
         ) as pbar:
             OG = OSMGraph.from_pbf(
                 str(clipped_path),
-                way_filter=opensidewalks_filter,
+                way_filter=opensidewalks_way_filter,
+                node_filter=opensidewalks_node_filter,
                 progressbar=pbar,
             )
 
@@ -92,39 +99,16 @@ def network(config: str, workdir: str, simplify: bool) -> None:
             OG.simplify()
 
         with click.progressbar(
-            length=len(OG.G.edges),
+            length=len(OG.G.edges) + len(OG.G.nodes),
             label=f"Constructing geometries for {region_id}...",
         ) as pbar:
             OG.construct_geometries(progressbar=pbar)
 
-        graph_path = Path(workdir, f"{region_id}.graph.geojson")
-        OG.to_geojson(graph_path)
+        graph_nodes_path = Path(workdir, f"{region_id}.graph.nodes.geojson")
+        graph_edges_path = Path(workdir, f"{region_id}.graph.edges.geojson")
+        OG.to_geojson(graph_nodes_path, graph_edges_path)
 
         click.echo(f"Created network from clipped {region_id} region.")
-
-
-@osm_osw.command()
-@click.argument("config", type=click.Path())
-@click.option("--workdir", envvar="OSM_OSW_WORKDIR", default=TMP_DIR)
-def extract_nodes(config: str, workdir: str) -> None:
-    config = ConfigSchema.dict_from_filepath(config)
-
-    for region in config["features"]:
-        region_id = region["properties"]["id"]
-        clipped_path = Path(workdir, f"{region_id}.osm.pbf")
-
-        # TODO: add a progressbar
-        click.echo(f"Counting network ways in {region_id}...")
-        # TODO: include node filter to extract only nodes fitting the OSW
-        # schema
-        nodes = WayNodes(clipped_path)
-        nodes_fc = {"type": "FeatureCollection", "features": nodes}
-
-        nodes_path = Path(workdir, f"{region_id}.nodes.geojson")
-        with open(nodes_path, "w") as f:
-            json.dump(f, nodes_fc)
-
-        click.echo(f"Extracte nodes from clipped {region_id} region.")
 
 
 @osm_osw.command()
@@ -175,11 +159,12 @@ def incline(config: str, workdir: str) -> None:
         )
         region_id = region["properties"]["id"]
 
-        graph_geojson_path = Path(workdir, f"{region_id}.graph.geojson")
+        graph_nodes_path = Path(workdir, f"{region_id}.graph.nodes.geojson")
+        graph_edges_path = Path(workdir, f"{region_id}.graph.edges.geojson")
 
         # FIXME: using unweaver's geopackage might make many of these steps
         # easier
-        OG = OSMGraph.from_geojson(Path(workdir, f"{region_id}.graph.geojson"))
+        OG = OSMGraph.from_geojson(graph_nodes_path, graph_edges_path)
 
         tilesets = list_ned13s(workdir)
         for tileset in tilesets:
@@ -197,7 +182,8 @@ def incline(config: str, workdir: str) -> None:
                         if incline is not None:
                             d["incline"] = incline
                         bar.update(1)
-        OG.to_geojson(graph_geojson_path)
+
+        OG.to_geojson(graph_nodes_path, graph_edges_path)
 
 
 @osm_osw.command()
