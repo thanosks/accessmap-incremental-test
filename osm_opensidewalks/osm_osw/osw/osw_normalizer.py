@@ -18,6 +18,10 @@ class OSWWayNormalizer:
             or self.is_road()
         )
 
+    @staticmethod
+    def osw_way_filter(tags):
+        return OSWWayNormalizer(tags).filter()
+
     def normalize(self):
         if self.is_sidewalk():
             return self._normalize_sidewalk()
@@ -104,6 +108,10 @@ class OSWNodeNormalizer:
 
     def filter(self):
         return self.is_kerb()
+
+    @staticmethod
+    def osw_node_filter(tags):
+        return OSWNodeNormalizer(tags).filter()
 
     def normalize(self):
         if self.is_kerb():

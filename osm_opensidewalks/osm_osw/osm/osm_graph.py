@@ -148,7 +148,11 @@ class OSMGraph:
         # sort on-the-fly.
         remove_nodes = {}
 
-        for node in self.G.nodes:
+        for node, d in self.G.nodes(data=True):
+            if OSWNodeNormalizer.osw_node_filter(d):
+                # Skip if this is an node feature of interest, e.g. kerb ramp
+                continue
+
             predecessors = list(self.G.predecessors(node))
             successors = list(self.G.successors(node))
 
