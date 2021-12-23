@@ -1,7 +1,7 @@
 FROM python:3.8-buster
 MAINTAINER Nick Bolten <nbolten@gmail.com>
 
-RUN apt-get update && apt-get install -y osmium-tool
+RUN apt-get update && apt-get install -y osmium-tool osmosis
 
 RUN mkdir /app
 WORKDIR /app

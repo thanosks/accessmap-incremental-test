@@ -1,4 +1,5 @@
 """osm_opensidewalks CLI."""
+import asyncio
 import json
 from pathlib import Path
 
@@ -42,21 +43,31 @@ def fetch(config: str, workdir: str) -> None:
 @click.argument("config", type=click.Path())
 @click.option("--workdir", envvar="OSM_OSW_WORKDIR", default=TMP_DIR)
 def clip(config: str, workdir: str) -> None:
+    # FIXME: add option to configure number of simultaneous processes and/or
+    # maximum memory usage.
     config = ConfigSchema.dict_from_filepath(config)
 
+    regions = [region["properties"]["id"] for region in config["features"]]
+    click.echo(f"Extracting clipped .osm.pbf regions for {', '.join(regions)}")
+
+    osm_clips = []
     for region in config["features"]:
         extract_path = Path(
             workdir, Path(region["properties"]["extract_url"]).name
         )
 
         region_id = region["properties"]["id"]
-        click.echo(f"Extracting clipped region of .osm.pbf for {region_id}...")
 
         clipped_path = Path(workdir, f"{region_id}.osm.pbf")
 
-        osm_clip(extract_path, clipped_path, region)
+        osm_clips.append(osm_clip(extract_path, clipped_path, region))
 
-        click.echo(f"Clipped OSM PBF is at {clipped_path}.")
+    async def run_all_osm_clips():
+        await asyncio.gather(*osm_clips)
+
+    asyncio.run(run_all_osm_clips())
+
+    click.echo("Clipped OSM PBFs.")
 
 
 @osm_osw.command()
