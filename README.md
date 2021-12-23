@@ -49,9 +49,10 @@ application.
 
 ### Creating OpenSidewalks data from OpenStreetMap
 
-This is a simple, two-step process: (1) edit `input/config.geojson` to your
-preferences and (2) run `docker-compose up data_osm_osw`. This process uses the
-`osm_osw` package defined in this repo.
+This is a simple, three-step process: (1) edit `input/config.geojson` to your
+preferences (2) run `docker-compose up data_fetch` to fetch the source data
+and (3) `docker-compose up data_osm_osw` to build the data. This process uses
+the `osm_osw` package defined in this repo.
 
 #### `config.geojson`
 
@@ -81,7 +82,12 @@ be fetched automatically and used to extract path information.
 ### Fetching and extracting data into an OpenSidewalks Schema-compatible
 ### GeoJSON
 
-In the main directory of this repo, run:
+To fetch the source data, run this in the main directory of this repo:
+
+    docker-compose up data_fetch
+
+To build/process the data into an OpenSidewalks-compatible format, run this in
+the main directory of this repo:
 
     docker-compose up data_osm_osw
 

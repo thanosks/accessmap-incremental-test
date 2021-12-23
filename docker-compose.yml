@@ -60,6 +60,18 @@ services:
 # for the web application. This should be run before the "build" or main
 # stages
 #
+  data_fetch:
+    env_file: accessmap-incremental.env
+    build: ./osm_opensidewalks
+    entrypoint: "osm_osw fetch /input/config.geojson"
+    environment:
+      - OSM_OSW_WORKDIR=/output
+    volumes:
+        - ./input:/input:ro
+        - ./output:/output:rw
+    profiles:
+      - data
+
   data_osm_osw:
     env_file: accessmap-incremental.env
     build: ./osm_opensidewalks

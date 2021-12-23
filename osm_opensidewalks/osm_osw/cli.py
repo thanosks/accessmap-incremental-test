@@ -246,7 +246,6 @@ def merge(config: str, workdir: str) -> None:
 @click.option("--workdir", envvar="OSM_OSW_WORKDIR", default=TMP_DIR)
 @click.pass_context
 def runall(ctx: click.Context, config: str, workdir: str) -> None:
-    ctx.forward(fetch)
     ctx.forward(clip)
     ctx.forward(network)
     ctx.forward(infer_curbramps)
