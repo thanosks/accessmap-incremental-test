@@ -75,8 +75,12 @@ def clip(config: str, workdir: str) -> None:
 @click.option("--workdir", envvar="OSM_OSW_WORKDIR", default=TMP_DIR)
 @click.option("-s/-ns", "--simplify/--no_simplify", default=True)
 def network(config: str, workdir: str, simplify: bool) -> None:
+    # FIXME: move at least some of the async functionality to upstream modules,
+    # e.g. the 'asyncifying' run_in_executor-using async functions
     config = ConfigSchema.dict_from_filepath(config)
 
+    # FIXME: define this at a module-level and make it the default behavior.
+    # OpenSidewalks Schema-fication should be hardcoded (for now).
     def opensidewalks_way_filter(tags):
         normalizer = OSWWayNormalizer(tags)
         return normalizer.filter()
@@ -85,6 +89,158 @@ def network(config: str, workdir: str, simplify: bool) -> None:
         normalizer = OSWNodeNormalizer(tags)
         return normalizer.filter()
 
+    #
+    # Get counts of all ways/nodes in each dataset
+    #
+
+    async def count_ways(pbf_path: str):
+        loop = asyncio.get_event_loop()
+        way_counter = WayCounter()
+        await loop.run_in_executor(None, way_counter.apply_file, pbf_path)
+        return way_counter.count
+
+    async def count_nodes(pbf_path: str):
+        loop = asyncio.get_event_loop()
+        node_counter = NodeCounter()
+        await loop.run_in_executor(None, node_counter.apply_file, pbf_path)
+        return node_counter.count
+
+    tasks = []
+    for region in config["features"]:
+        region_id = region["properties"]["id"]
+        pbf_path = str(Path(workdir, f"{region_id}.osm.pbf"))
+        tasks.append(count_ways(pbf_path))
+        tasks.append(count_nodes(pbf_path))
+
+    with click.progressbar(
+        length=len(tasks),
+        label="Estimating number of ways and nodes in datasets...",
+    ) as pbar:
+
+        async def count_main():
+            results = []
+            for future in asyncio.as_completed(tasks):
+                pbar.update(1)
+                results.append(await future)
+            return results
+
+        count_results = asyncio.run(count_main())
+    graph_element_count = sum(count_results)
+
+    #
+    # Create an OSMGraph per region
+    #
+    async def get_osmgraph(region_id, pbf_path, way_filter, node_filter, pbar):
+        loop = asyncio.get_event_loop()
+        OG = await loop.run_in_executor(
+            None,
+            OSMGraph.from_pbf,
+            pbf_path,
+            way_filter,
+            node_filter,
+            pbar,
+        )
+        return region_id, OG
+
+    with click.progressbar(
+        length=graph_element_count,
+        label="Creating networks from region extracts...",
+    ) as pbar:
+
+        tasks = []
+        for region in config["features"]:
+            region_id = region["properties"]["id"]
+            pbf_path = str(Path(workdir, f"{region_id}.osm.pbf"))
+            tasks.append(
+                get_osmgraph(
+                    region_id,
+                    pbf_path,
+                    opensidewalks_way_filter,
+                    opensidewalks_node_filter,
+                    pbar,
+                )
+            )
+
+        async def osm_graph_main():
+            return await asyncio.gather(*tasks)
+
+        osm_graph_results = asyncio.run(osm_graph_main())
+
+    osm_graph_results = list(osm_graph_results)
+    #
+    # Optionally, simplify ways by joining simple connection nodes (degree-2)
+    #
+    if simplify:
+
+        async def simplify_og(og):
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, og.simplify)
+
+        with click.progressbar(
+            length=len(osm_graph_results),
+            label="Simplifying ways...",
+        ) as pbar:
+
+            async def simplify_main():
+                tasks = [
+                    simplify_og(OG) for region_id, OG in osm_graph_results
+                ]
+                for future in asyncio.as_completed(tasks):
+                    pbar.update(1)
+                    await future
+
+            asyncio.run(simplify_main())
+
+    #
+    # Construct geometries
+    #
+    async def construct_geometries(og, pbar):
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, og.construct_geometries, pbar)
+
+    with click.progressbar(
+        length=len(osm_graph_results),
+        label="Constructing geometries...",
+    ) as pbar:
+
+        async def construct_geometries_main():
+            tasks = [
+                construct_geometries(OG, pbar)
+                for region_id, OG in osm_graph_results
+            ]
+            await asyncio.gather(*tasks)
+
+        asyncio.run(construct_geometries_main())
+
+    #
+    # Write to file
+    #
+    async def write_og(region_id: str, og):
+        loop = asyncio.get_event_loop()
+        nodes_path = Path(workdir, f"{region_id}.graph.nodes.geojson")
+        edges_path = Path(workdir, f"{region_id}.graph.edges.geojson")
+        await loop.run_in_executor(None, og.to_geojson, nodes_path, edges_path)
+
+    with click.progressbar(
+        length=len(osm_graph_results),
+        label="Writing graph nodes and edges GeoJSONs to file...",
+    ) as pbar:
+
+        async def write_main():
+            tasks = [
+                write_og(region_id, OG) for region_id, OG in osm_graph_results
+            ]
+            for future in asyncio.as_completed(tasks):
+                pbar.update(1)
+                await future
+
+        asyncio.run(write_main())
+
+    regions = ", ".join(r for r, o in osm_graph_results)
+    click.echo(f"Created networks from the clipped {regions} region(s).")
+
+
+"""
     for region in config["features"]:
         region_id = region["properties"]["id"]
         clipped_path = Path(workdir, f"{region_id}.osm.pbf")
@@ -121,6 +277,7 @@ def network(config: str, workdir: str, simplify: bool) -> None:
         OG.to_geojson(graph_nodes_path, graph_edges_path)
 
         click.echo(f"Created network from clipped {region_id} region.")
+        """
 
 
 @osm_osw.command()

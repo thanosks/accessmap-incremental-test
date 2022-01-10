@@ -205,7 +205,12 @@ class OSMGraph:
             # Remove internal nodes by group
             for neighbors in neighbors_list:
                 u, v, w, segment_n = neighbors[0]
-                edge_data = self.G[u][v][0]
+                # FIXME: this try/except is a hack to avert an uncommon and
+                # unexplored edge case. Come back and fix!
+                try:
+                    edge_data = self.G[u][v][0]
+                except KeyError:
+                    continue
                 ndref = edge_data["ndref"]
                 self.G.remove_edge(u, v)
                 for node_in, node, node_out, segment_n in neighbors:
