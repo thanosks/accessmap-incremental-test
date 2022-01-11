@@ -118,7 +118,10 @@ services:
       - ./config/tippecanoe/build_tiles.sh:/build_tiles.sh:ro
       - ./config/tippecanoe/pedestrian-tilejson.json:/home/tippecanoe/pedestrian.json:ro
       - ./config/tippecanoe/regions-tilejson.json:/home/tippecanoe/regions.json:ro
+      - ./config/tippecanoe/tasks-tilejson.json:/home/tippecanoe/tasks.json:ro
       - ./output/transportation-tasks.geojson:/home/tippecanoe/input/transportation.geojson:ro
+      - ./output/transportation-crossings_mapped.geojson.crossingtasks.geojson:/home/tippecanoe/input/crossing_tasks.geojson:ro
+      - ./output/transportation-tasks.geojson.sidewalktasks.geojson:/home/tippecanoe/input/sidewalk_tasks.geojson:ro
       - ./input/config.geojson:/home/tippecanoe/input/regions.geojson:ro
       - ./build/tiles:/home/tippecanoe/output:rw
     profiles:

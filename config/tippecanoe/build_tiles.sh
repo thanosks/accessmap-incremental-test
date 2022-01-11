@@ -22,3 +22,12 @@ tippecanoe -f -Z 0 -z 14 -B 14 -r 2.5 \
 
 cp /home/tippecanoe/regions.json ${outputdir}/tilejson/regions.json
 sed -i s,HOSTNAME,${HOST},g ${outputdir}/tilejson/regions.json
+
+# Build tasks layers
+tippecanoe -f -Z 0 -z 14 -B 14 -r 2.5 \
+    -L crossing_tasks:${inputdir}/crossing_tasks.geojson \
+    -L sidewalk_tasks:${inputdir}/sidewalk_tasks.geojson \
+    -e ${outputdir}/tasks
+
+cp /home/tippecanoe/tasks.json ${outputdir}/tilejson/tasks.json
+sed -i s,HOSTNAME,${HOST},g ${outputdir}/tilejson/tasks.json

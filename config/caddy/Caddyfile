@@ -62,6 +62,12 @@
         Content-Encoding gzip
     }
 
+    header /tasks {
+        Access-Control-Allow-Origin *
+        Content-Type application/vnd.mapbox-vector-tile
+        Content-Encoding gzip
+    }
+
     header /tilejson {
         Content-Type text/plain
         -Content-Encoding

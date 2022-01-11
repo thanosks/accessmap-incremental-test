@@ -1,0 +1,38 @@
+{
+  "description": "Tasks mapped in the OSW tasking manager",
+  "filesize": 183337,
+  "format": "pbf",
+  "id": "tasks",
+  "maxzoom": 14,
+  "minzoom": 0,
+  "name": "OpenSidewalks tasks",
+  "private": false,
+  "scheme": "xyz",
+  "tilejson": "2.2.0",
+  "tiles": [
+    "HOSTNAME/tiles/tasks/{z}/{x}/{y}.pbf"
+  ],
+  "vector_layers": [{
+    "description": "",
+    "fields": {
+      "name": "String"
+    },
+    "id": "crossing_tasks",
+    "maxzoom": 14,
+    "minzoom": 0,
+    "source": "crossing_tasks",
+    "source_name": "OSW tasking manager crossing tasks"
+  }, {
+    "description": "",
+    "fields": {
+      "name": "String"
+    },
+    "id": "sidewalk_tasks",
+    "maxzoom": 14,
+    "minzoom": 0,
+    "source": "sidewalk_tasks",
+    "source_name": "OSW tasking manager sidewalk tasks"
+  }],
+  "version": "1.0.0",
+  "webpage": "www.accessmap.io"
+}
