@@ -87,11 +87,10 @@ services:
   data_incremental:
     env_file: accessmap-incremental.env
     build: ./incremental
-    entrypoint: bash -c "incremental crossings /shared/transportation.geojson /shared/transportation-crossings_mapped.geojson /crossings_tasks/*.geoJSON && incremental sidewalks /shared/transportation-crossings_mapped.geojson /shared/transportation-tasks.geojson /sidewalks_tasks/*.geoJSON"
+    entrypoint: bash -c "incremental fetch /input/tasks.json /input/tasks && incremental crossings /shared/transportation.geojson /shared/transportation-crossings_mapped.geojson /input/tasks/crossings/*.geojson && incremental sidewalks /shared/transportation-crossings_mapped.geojson /shared/transportation-tasks.geojson /input/tasks/sidewalks/*.geojson"
     volumes:
         - ./output:/shared:rw
-        - ./input/tasks/crossings_tasks:/crossings_tasks:ro
-        - ./input/tasks/sidewalks_tasks:/sidewalks_tasks:ro
+        - ./input/incremental:/input:rw
     profiles:
       - data
 
