@@ -10,7 +10,7 @@ from scipy.interpolate import RectBivariateSpline
 from .constants import ned_13_index
 
 AWS_BASE = "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation"
-TEMPLATE = AWS_BASE + "/13/TIFF/{e}/USGS_13_{e}.tif"
+TEMPLATE = AWS_BASE + "/13/TIFF/current/{e}/USGS_13_{e}.tif"
 
 
 class InvalidNED13TileName(Exception):
