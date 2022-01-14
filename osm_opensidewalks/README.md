@@ -1,5 +1,16 @@
 # `osm_osw`
 
+## Installation
+
+`osm_osw` requires these external tools:
+
+- `osmium`, package name `osmium-tool` on Debian/Ubuntu. This provides
+performant Python adapters for stream-processing of .osm.pbf files.
+
+- `osmosis`, package name `osmosis` on Debian/Ubuntu. This provides low-memory
+operations on .osm.pbf files and is used in `osm_osw` for parallel extraction
+of subregions from .osm.pbf files.
+
 ## Commands and configuration
 
 `osm_osw` makes heavy use of a working directory that contains fetched vector
