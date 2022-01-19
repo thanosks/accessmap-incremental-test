@@ -7,9 +7,9 @@ import click
 import rasterio
 from shapely.geometry import shape
 
-from .constants import TMP_DIR
+from .constants import BUFFER_DIST, TMP_DIR
 from .dems.transforms import get_ned13_for_bounds, infer_incline, list_ned13s
-from .dems.mask_dem import count_buildings, extract_buildings, mask_dem
+from .dems.mask_dem import count_masked_areas, extract_areas, mask_dem
 from .osm.osm_clip import osm_clip
 from .osm.osm_graph import OSMGraph, NodeCounter, WayCounter
 from .osm.fetch import osm_fetch
@@ -305,22 +305,22 @@ def mask(config: str, workdir: str) -> None:
         )
 
         clipped_extract_path = Path(workdir, f"{region_id}.osm.pbf")
-        click.echo(f"Counting buildings in {region_id}...")
-        building_count = count_buildings(clipped_extract_path)
+        click.echo(f"Counting buildings and bridge areas in {region_id}...")
+        area_count = count_masked_areas(clipped_extract_path)
         with click.progressbar(
-            length=building_count,
-            label=f"Extracting buildings from {region_id}: ",
+            length=area_count,
+            label=f"Extracting buildings and bridge areas from {region_id}: ",
         ) as pbar:
-            building_geoms = extract_buildings(
-                clipped_extract_path, progressbar=pbar
+            area_geoms = extract_areas(
+                clipped_extract_path, buffer=BUFFER_DIST, progressbar=pbar
             )
 
         for tileset, path in zip(tilesets, tileset_paths):
             with click.progressbar(
-                length=building_count,
+                length=area_count,
                 label=f"Masking {tileset} with geometries from {region_id}",
             ) as pbar2:
-                mask_dem(path, building_geoms, progressbar=pbar2)
+                mask_dem(path, area_geoms, progressbar=pbar2)
 
 
 @osm_osw.command()

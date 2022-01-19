@@ -1,73 +1,168 @@
 import json
 
+import numpy as np
 import osmium
 from osmium.geom import GeoJSONFactory
 import rasterio
-from shapely.geometry import Point, shape
+from shapely.geometry import MultiPolygon, Point, mapping, shape
+import utm
 
 
-class BuildingCounter(osmium.SimpleHandler):
+def is_masked_area(tags):
+    if "building" in tags:
+        return True
+    if "man_made" in tags and tags["man_made"] == "bridge":
+        return True
+    return False
+
+
+def multipolygon_to_utm(geojson_geom):
+    # Flatten array, then get UTM coords
+    lons = []
+    lats = []
+    for polygon in geojson_geom["coordinates"]:
+        for ring in polygon:
+            for lon, lat in ring:
+                lons.append(lon)
+                lats.append(lat)
+    xs, ys, zone_number, zone_letter = utm.from_latlon(
+        np.array(lats), np.array(lons)
+    )
+
+    # Unflatten array so that it's a polygon again
+    xs_rev = list(reversed(xs))
+    ys_rev = list(reversed(ys))
+    new_coords = []
+    for polygon in geojson_geom["coordinates"]:
+        p = []
+        new_coords.append(p)
+        for ring in polygon:
+            r = []
+            p.append(r)
+            for lon, lat in ring:
+                r.append([xs_rev.pop(), ys_rev.pop()])
+
+    return (
+        {"type": "MultiPolygon", "coordinates": new_coords},
+        zone_number,
+        zone_letter,
+    )
+
+
+def multipolygon_from_utm(geojson_geom, zone_number, zone_letter):
+    # Reflatten and reproject to lon-lat
+    xs_buff = []
+    ys_buff = []
+    for polygon in geojson_geom["coordinates"]:
+        for ring in polygon:
+            for x, y in ring:
+                xs_buff.append(x)
+                ys_buff.append(y)
+
+    lats_buff, lons_buff = utm.to_latlon(
+        np.array(xs_buff), np.array(ys_buff), zone_number, zone_letter
+    )
+
+    # Unflatten array so that it's a polygon again
+    lons_buff_rev = list(reversed(lons_buff))
+    lats_buff_rev = list(reversed(lats_buff))
+
+    buff_coords = []
+    for polygon in geojson_geom["coordinates"]:
+        p = []
+        buff_coords.append(p)
+        for ring in polygon:
+            r = []
+            p.append(r)
+            for lon, lat in ring:
+                r.append([lons_buff_rev.pop(), lats_buff_rev.pop()])
+
+    return {"type": "MultiPolygon", "coordinates": buff_coords}
+
+
+def buffer_multipolygon(geojson_geom, buffer):
+    utm_multipolygon, zone_number, zone_letter = multipolygon_to_utm(
+        geojson_geom
+    )
+    multipolygon = shape(utm_multipolygon)
+    buffered = multipolygon.buffer(buffer)
+
+    if buffered.type == "Polygon":
+        buffered = MultiPolygon([buffered])
+
+    buffered_geojson = mapping(buffered)
+
+    return multipolygon_from_utm(buffered_geojson, zone_number, zone_letter)
+
+
+class MaskedAreaCounter(osmium.SimpleHandler):
     def __init__(self):
         super().__init__()
         self.count = 0
 
     def area(self, a):
-        if "building" in a.tags:
+        if is_masked_area(a.tags):
             self.count += 1
 
 
-class BuildingHandler(osmium.SimpleHandler):
-    def __init__(self, progressbar=None):
+class MaskedAreaHandler(osmium.SimpleHandler):
+    def __init__(self, buffer=None, progressbar=None):
         super().__init__()
-        self.buildings = []
+        self.areas = []
         self.geojson_factory = GeoJSONFactory()
+        self.buffer = buffer
         self.progressbar = progressbar
 
     def area(self, a):
-        if "building" in a.tags:
+        if is_masked_area(a.tags):
             try:
                 geojson = self.geojson_factory.create_multipolygon(a)
                 geojson_geom = json.loads(geojson)
-                self.buildings.append(geojson_geom)
+                if self.buffer is not None:
+                    geojson_geom = buffer_multipolygon(
+                        geojson_geom, self.buffer
+                    )
+
+                self.areas.append(geojson_geom)
             except RuntimeError:
                 # A RuntimeError is raised when the multipolygon cannot be
                 # created. This is upstream behavior that we do not yet work
-                # around, so instead we will simply skip the building
+                # around, so instead we will simply skip the area
                 pass
 
             if self.progressbar is not None:
                 self.progressbar.update(1)
 
 
-def count_buildings(path):
-    """Count the number of buildings in an OSM PBF file.
+def count_masked_areas(path):
+    """Count the number of areas to mask in an OSM PBF file.
 
     :param path: Path to the .osm.pbf
     :type path: str
 
     """
     # FIXME: include bridges and other features, rename to reflect this.
-    building_counter = BuildingCounter()
-    building_counter.apply_file(str(path))
+    area_counter = MaskedAreaCounter()
+    area_counter.apply_file(str(path))
 
-    return building_counter.count
+    return area_counter.count
 
 
-def extract_buildings(path, progressbar=None):
-    """Extract (multi)polygons of buildings from an OSM PBF file.
+def extract_areas(path, buffer=None, progressbar=None):
+    """Extract (multi)polygons of areas to mask from an OSM PBF file.
 
     :param path: Path to the .osm.pbf file.
     :type path: str
     :param progressbar: An (optional) click.progressbar object that will be
-                        updated as buildings are extracted.
+                        updated as areas are extracted.
     :type progressbar: click.progressbar
 
     """
     # FIXME: include bridges and other features, rename to reflect this.
-    building_handler = BuildingHandler(progressbar=progressbar)
-    building_handler.apply_file(str(path))
+    area_handler = MaskedAreaHandler(buffer=buffer, progressbar=progressbar)
+    area_handler.apply_file(str(path))
 
-    return building_handler.buildings
+    return area_handler.areas
 
 
 def mask_dem(dem_path, polygons, progressbar=False):
