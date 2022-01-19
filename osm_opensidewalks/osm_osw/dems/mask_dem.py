@@ -81,7 +81,6 @@ def mask_dem(dem_path, polygons, progressbar=False):
 
     """
     with rasterio.open(dem_path, "r+") as rast:
-        rast.write_mask(True)
         for polygon in polygons:
             mask_polygon(polygon, rast)
             if progressbar is not None:

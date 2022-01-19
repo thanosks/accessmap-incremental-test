@@ -287,6 +287,16 @@ def mask(config: str, workdir: str) -> None:
     config = ConfigSchema.dict_from_filepath(config)
 
     tilesets = list_ned13s(workdir)
+    tileset_paths = [
+        Path(workdir, "dems", f"{tileset}.tif") for tileset in tilesets
+    ]
+
+    # Create blank mask by default - no pixels are masked.
+    for path in tileset_paths:
+        with rasterio.open(path, "r+") as rast:
+            rast.write_mask(True)
+
+    # Add masked regions
     for region in config["features"]:
         region_id = region["properties"]["id"]
         # Fetch DEMs if they aren't already cached
@@ -305,13 +315,12 @@ def mask(config: str, workdir: str) -> None:
                 clipped_extract_path, progressbar=pbar
             )
 
-        for tileset in tilesets:
-            tileset_path = Path(workdir, "dems", f"{tileset}.tif")
+        for tileset, path in zip(tilesets, tileset_paths):
             with click.progressbar(
                 length=building_count,
                 label=f"Masking {tileset} with geometries from {region_id}",
             ) as pbar2:
-                mask_dem(tileset_path, building_geoms, progressbar=pbar2)
+                mask_dem(path, building_geoms, progressbar=pbar2)
 
 
 @osm_osw.command()
