@@ -4,7 +4,7 @@ import numpy as np
 import osmium
 from osmium.geom import GeoJSONFactory
 import rasterio
-from shapely.geometry import MultiPolygon, Point, mapping, shape
+from shapely.geometry import LineString, MultiPolygon, Point, mapping, shape
 import utm
 
 
@@ -95,6 +95,32 @@ def buffer_multipolygon(geojson_geom, buffer):
     return multipolygon_from_utm(buffered_geojson, zone_number, zone_letter)
 
 
+def buffer_linestring(geojson_linestring, buffer):
+    lons, lats = zip(*geojson_linestring["coordinates"])
+    xs, ys, zone_number, zone_letter = utm.from_latlon(
+        np.array(lats), np.array(lons)
+    )
+
+    linestring = LineString(zip(xs, ys))
+
+    polygon = linestring.buffer(buffer)
+
+    buffered_xs, buffered_ys = zip(*polygon.exterior.coords)
+
+    buffered_lats, buffered_lons = utm.to_latlon(
+        np.array(buffered_xs), np.array(buffered_ys), zone_number, zone_letter
+    )
+
+    exterior_ring = list(zip(buffered_lons, buffered_lats))
+    polygon = [exterior_ring]
+    multipolygon_coords = [polygon]
+
+    return {
+        "type": "MultiPolygon",
+        "coordinates": multipolygon_coords,
+    }
+
+
 class MaskedAreaCounter(osmium.SimpleHandler):
     def __init__(self):
         super().__init__()
@@ -134,6 +160,48 @@ class MaskedAreaHandler(osmium.SimpleHandler):
                 self.progressbar.update(1)
 
 
+def bridge_filter(tags):
+    if "bridge" in tags and tags["bridge"] == "yes":
+        return True
+    return False
+
+
+class BridgeLineCounter(osmium.SimpleHandler):
+    def __init__(self):
+        super().__init__()
+        self.count = 0
+
+    def way(self, w):
+        if bridge_filter(w.tags):
+            self.count += 1
+
+
+class MaskedBridgeLineHandler(osmium.SimpleHandler):
+    def __init__(self, buffer, progressbar=None):
+        super().__init__()
+        self.buffer = buffer
+        self.bridges = []
+        self.geojson_factory = GeoJSONFactory()
+        self.progressbar = progressbar
+
+    def way(self, w):
+        if bridge_filter(w.tags):
+            try:
+                geojson = self.geojson_factory.create_linestring(w)
+                geojson_geom = json.loads(geojson)
+                buffered_geom = buffer_linestring(geojson_geom, self.buffer)
+
+                self.bridges.append(buffered_geom)
+            except RuntimeError:
+                # A RuntimeError is raised when the linestring cannot be
+                # created. This is upstream behavior that we do not yet work
+                # around, so instead we will simply skip the line
+                pass
+
+            if self.progressbar is not None:
+                self.progressbar.update(1)
+
+
 def count_masked_areas(path):
     """Count the number of areas to mask in an OSM PBF file.
 
@@ -141,7 +209,6 @@ def count_masked_areas(path):
     :type path: str
 
     """
-    # FIXME: include bridges and other features, rename to reflect this.
     area_counter = MaskedAreaCounter()
     area_counter.apply_file(str(path))
 
@@ -158,11 +225,41 @@ def extract_areas(path, buffer=None, progressbar=None):
     :type progressbar: click.progressbar
 
     """
-    # FIXME: include bridges and other features, rename to reflect this.
     area_handler = MaskedAreaHandler(buffer=buffer, progressbar=progressbar)
     area_handler.apply_file(str(path))
 
     return area_handler.areas
+
+
+def count_bridges(path):
+    """Count the number of linear bridge features to mask in an OSM PBF file.
+
+    :param path: Path to the .osm.pbf
+    :type path: str
+
+    """
+    bridge_counter = BridgeLineCounter()
+    bridge_counter.apply_file(str(path))
+
+    return bridge_counter.count
+
+
+def extract_bridges(path, buffer=30, progressbar=None):
+    """Extract buffered polygons of bridge lines to mask from an OSM PBF file.
+
+    :param path: Path to the .osm.pbf file.
+    :type path: str
+    :param progressbar: An (optional) click.progressbar object that will be
+                        updated as areas are extracted.
+    :type progressbar: click.progressbar
+
+    """
+    bridge_handler = MaskedBridgeLineHandler(
+        buffer=buffer, progressbar=progressbar
+    )
+    bridge_handler.apply_file(str(path), locations=True)
+
+    return bridge_handler.bridges
 
 
 def mask_dem(dem_path, polygons, progressbar=False):

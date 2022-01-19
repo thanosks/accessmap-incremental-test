@@ -9,7 +9,13 @@ from shapely.geometry import shape
 
 from .constants import BUFFER_DIST, TMP_DIR
 from .dems.transforms import get_ned13_for_bounds, infer_incline, list_ned13s
-from .dems.mask_dem import count_masked_areas, extract_areas, mask_dem
+from .dems.mask_dem import (
+    count_masked_areas,
+    count_bridges,
+    extract_areas,
+    extract_bridges,
+    mask_dem,
+)
 from .osm.osm_clip import osm_clip
 from .osm.osm_graph import OSMGraph, NodeCounter, WayCounter
 from .osm.fetch import osm_fetch
@@ -321,6 +327,24 @@ def mask(config: str, workdir: str) -> None:
                 label=f"Masking {tileset} with geometries from {region_id}",
             ) as pbar2:
                 mask_dem(path, area_geoms, progressbar=pbar2)
+
+        click.echo(f"Counting bridge lines in {region_id}...")
+        bridge_count = count_bridges(clipped_extract_path)
+
+        with click.progressbar(
+            length=bridge_count,
+            label=f"Extracting buffered bridge lines from {region_id}: ",
+        ) as pbar:
+            bridge_geoms = extract_bridges(
+                clipped_extract_path, buffer=BUFFER_DIST, progressbar=pbar
+            )
+
+        for tileset, path in zip(tilesets, tileset_paths):
+            with click.progressbar(
+                length=bridge_count,
+                label=f"Masking {tileset} with bridges from {region_id}",
+            ) as pbar2:
+                mask_dem(path, bridge_geoms, progressbar=pbar2)
 
 
 @osm_osw.command()
