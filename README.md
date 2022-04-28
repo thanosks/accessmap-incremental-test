@@ -47,12 +47,37 @@ intersects completed tasks will be marked as audited. The output of this step
 is used as the `transportation.geojson` used to drive the AccessMap web
 application.
 
+### Before doing anything else
+
+Clone this repo! Run:
+
+    git clone https://github.com/accessmap/accessmap-incremental
+
+Then
+    cd accessmap-incremental
+
+All of the instructions below assume you're running commands in the
+`accessmap-incremental` directory.
+
 ### Creating OpenSidewalks data from OpenStreetMap
 
-This is a simple, three-step process: (1) edit `input/config.geojson` to your
-preferences (2) run `docker-compose up data_fetch` to fetch the source data
-and (3) `docker-compose up data_osm_osw` to build the data. This process uses
-the `osm_osw` package defined in this repo.
+This is a simple, three-step process: (1) `create accessmap-incremental.env`,
+(2) edit `input/config.geojson` to your preferences (3) run
+`docker-compose up data_fetch` to fetch the source data and (4)
+`docker-compose up data_osm_osw` to build the data. This process uses the
+`osm_osw` package defined in this repo.
+
+#### `accessmap-incremental.env`
+
+`docker-compose` needs to find settings in a file named
+`accessmap-incremental.env` in the same directory as the `docker-compose.yml`
+file. This repository provides a sample file to get you started quickly, and
+no changes to it are required in order to run the data process. To use this
+sample file, run:
+
+    cp accessmap-incremental.env.sample accessmap-incremental.env
+
+(Or just create a copy with your file manager and rename it)
 
 #### `config.geojson`
 
