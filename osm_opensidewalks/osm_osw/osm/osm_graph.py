@@ -294,8 +294,14 @@ class OSMGraph:
         edge_features = []
         for u, v, d in self.G.edges(data=True):
             d_copy = {**d}
-            d_copy["_u"] = u
-            d_copy["_v"] = v
+            d_copy["_u_id"] = u
+            d_copy["_v_id"] = v
+
+            if "osm_id" in d_copy:
+                d_copy.pop("osm_id")
+            if "segment" in d_copy:
+                d_copy.pop("segment")
+
             geometry = mapping(d_copy.pop("geometry"))
 
             edge_features.append(
@@ -306,7 +312,11 @@ class OSMGraph:
         node_features = []
         for n, d in self.G.nodes(data=True):
             d_copy = {**d}
-            d_copy["_n"] = n
+            d_copy["_id"] = n
+
+            if "osm_id" in d_copy:
+                d_copy.pop("osm_id")
+
             geometry = mapping(d_copy.pop("geometry"))
 
             node_features.append(
@@ -333,14 +343,14 @@ class OSMGraph:
 
         for node_feature in nodes_fc["features"]:
             props = node_feature["properties"]
-            n = props.pop("_n")
+            n = props.pop("_id")
             props["geometry"] = shape(node_feature["geometry"])
             G.add_node(n, **props)
 
         for edge_feature in edges_fc["features"]:
             props = edge_feature["properties"]
-            u = props.pop("_u")
-            v = props.pop("_v")
+            u = props.pop("_u_id")
+            v = props.pop("_v_id")
 
             props["geometry"] = shape(edge_feature["geometry"])
 
