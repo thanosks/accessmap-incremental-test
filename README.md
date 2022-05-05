@@ -171,7 +171,7 @@ the settings there to the current deployment. Use `HOST=localhost` and
 After placing the `transportation.geojson` file produced in the next section
 (Data Process) into the `data` directory, simply run:
 
-    docker-compose -f docker-compose.build.yml up
+    docker-compose --profile build up
 
 This will prepare all the assets for the next stages.
 
