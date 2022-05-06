@@ -294,8 +294,8 @@ class OSMGraph:
         edge_features = []
         for u, v, d in self.G.edges(data=True):
             d_copy = {**d}
-            d_copy["_u_id"] = u
-            d_copy["_v_id"] = v
+            d_copy["_u_id"] = str(u)
+            d_copy["_v_id"] = str(v)
 
             if "osm_id" in d_copy:
                 d_copy.pop("osm_id")
@@ -312,7 +312,7 @@ class OSMGraph:
         node_features = []
         for n, d in self.G.nodes(data=True):
             d_copy = {**d}
-            d_copy["_id"] = n
+            d_copy["_id"] = str(n)
 
             if "osm_id" in d_copy:
                 d_copy.pop("osm_id")
