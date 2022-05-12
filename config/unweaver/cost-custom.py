@@ -6,8 +6,7 @@ import pytz
 
 # Default base moving speeds for different modes. All in m/s.
 # Slightly lower than average walking speed
-WALK_BASE = 1.3
-# Rough estimate
+WALK_BASE = 1.3  # Rough estimate
 WHEELCHAIR_BASE = 0.6
 # Roughly 5 mph
 POWERED_BASE = 2
@@ -33,6 +32,13 @@ def find_k(g, m, n):
 def tobler(grade, k=3.5, m=INCLINE_IDEAL, base=WALK_BASE):
     # Modified to be in meters / second rather than km / h
     return base * math.exp(-k * abs(grade - m))
+
+
+def street_avoidance_function(streetAvoidance, k=1):
+    if streetAvoidance >= 1:
+        return None
+
+    return math.exp(k * streetAvoidance)
 
 
 def cost_fun_generator(
@@ -63,9 +69,7 @@ def cost_fun_generator(
     else:
         # Unix epoch time is sent in integer format, but is in milliseconds.
         # Divide by 1000 to get seconds.
-        date = datetime.fromtimestamp(
-            timestamp / 1000, pytz.timezone("US/Pacific")
-        )
+        date = datetime.fromtimestamp(timestamp / 1000, pytz.timezone("US/Pacific"))
 
     def cost_fun(u, v, d):
         """Cost function that evaluates every edge, returning either a
@@ -123,25 +127,48 @@ def cost_fun_generator(
                 else:
                     pass
         elif highway in STREET_TYPES:
+            """
+            A street avoidance function should have these properties:
+                - When 0, it should not change the cost at all
+                - When 1, it should apply an infinite cost to all streets
+                - When intermediate (say 0.5), it should apply a modest cost
+                increase.
+                - The cost should increase monotonically from 0 to 1 and
+                probably be exponential-ish.
+
+            As a factor, the output of this function will be multiplied against
+            the final cost. Therefore:
+                - When the input is 0, the function should be 1
+                - When the input is 1, the function should be Inf/None (it is
+                okay for the function to be piecewise).
+                - When the input is between 0 and 1, the output should be a
+                number larger than 1 and monotonically increasing.
+
+                A function that satisfies these conditions is a simple
+                exponential/cubic/quartic (etc) function offset in the y axis
+                by y=1 and with a piecewise component that returns infinity
+                at x=1.
+            """
             if highway == "pedestrian":
                 # Pedestrian streets are good, use them with no extra cost
                 # (Using 'abs' to ensure non-negative)
-                street_cost_factor = abs(streetAvoidance + 1)
+                street_cost_factor = 1
             elif highway == "service":
-                # 10% extra cost for using a service road (includes alleys and
-                # driveways and parking lots)
-                street_cost_factor = 1.1 * (streetAvoidance + 1)
+                # Slight extra cost for using a service road (includes alleys
+                # and driveways and parking lots)
+                street_cost_factor = street_avoidance_function(streetAvoidance, 2)
             elif highway == "residential":
                 # It's a residential street and hopefully somewhat accessible.
-                # Apply a 20% street cost
-                street_cost_factor = 1.2 * (streetAvoidance + 1)
+                # Apply a slightly higher cost.
+                street_cost_factor = street_avoidance_function(streetAvoidance, 3)
             else:
-                # Apply an extra 50% cost for all other roads, which should
-                # be considered potentially unsafe/unreliable due to higher
-                # car traffic volume.
-                street_cost_factor = 1.5 * (streetAvoidance + 1)
+                # Apply a much higher cost to the other roads
+                street_cost_factor = street_avoidance_function(streetAvoidance, 4)
         else:
             # Unknown path type: do not use
+            return None
+
+        if street_cost_factor is None:
             return None
 
         # Handle all other ways as incline-having features
@@ -169,6 +196,10 @@ def cost_fun_generator(
                     base=base_speed,
                 )
 
+        # TODO: investigate why this value could happen. Tobler shouldn't
+        # return 0 speed, but it did once!
+        if speed == 0:
+            return None
         # Initial time estimate (in seconds) - based on speed
         time += length / speed
 

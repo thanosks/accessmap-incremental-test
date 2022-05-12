@@ -1,0 +1,28 @@
+{
+  "id": "cane",
+  "name": "cane",
+  "args": [
+    {
+      "name": "avoidCurbs",
+      "type": "fields.Boolean()"
+    },
+    {
+      "name": "uphill",
+      "type": "fields.Number(validate=validate.Range(0, 10))"
+    },
+    {
+      "name": "downhill",
+      "type": "fields.Number(validate=validate.Range(0, 15))"
+    },
+    {
+      "name": "timestamp",
+      "type": "fields.Integer()"
+    },
+    {
+      "name": "streetAvoidance",
+      "type": "fields.Number(validate=validate.Range(0, 3))"
+    }
+  ],
+  "cost_function": "cost-custom.py",
+  "directions": "directions-custom.py"
+}
