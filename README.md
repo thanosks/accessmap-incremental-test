@@ -72,12 +72,15 @@ This is a simple, three-step process: (1) `create accessmap-incremental.env`,
 `docker-compose` needs to find settings in a file named
 `accessmap-incremental.env` in the same directory as the `docker-compose.yml`
 file. This repository provides a sample file to get you started quickly, and
-no changes to it are required in order to run the data process. To use this
+only one change to it is required in order to run the data process. To use this
 sample file, run:
 
     cp accessmap-incremental.env.sample accessmap-incremental.env
 
 (Or just create a copy with your file manager and rename it)
+
+The one change required is to set the `MAPBOX_TOKEN` environment variable to
+a valid Mapbox token id.
 
 #### `config.geojson`
 
