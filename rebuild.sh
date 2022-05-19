@@ -4,6 +4,6 @@
 
 set -e
 
-docker-compose -f ${1} run --rm data_osm_osw
-docker-compose -f ${1} run --rm data_incremental
-docker-compose -f ${1} run --rm build_router & docker-compose -f ${1} run --rm build_tiles
+docker-compose run --rm data_osm_osw
+docker-compose run --rm data_incremental
+docker-compose run --rm build_router & docker-compose run --rm build_tiles
