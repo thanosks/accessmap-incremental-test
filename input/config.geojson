@@ -310,5 +310,45 @@
         ]
       ]
     }
-  }]
+  }, { 
+    "type": "Feature", 
+    "properties": { 
+      "id": "oh.columbus",
+      "name": "Columbus, OH",
+      "lon": -82.978930,
+      "lat": 40.030981,
+      "zoom": 14,
+      "extract_url": "https://download.geofabrik.de/north-america/us/ohio-latest.osm.pbf"
+     }, 
+    "geometry": { 
+      "type": "MultiPolygon", 
+      "coordinates": [ 
+        [ 
+          [ 
+            [ 
+              -82.9516115, 
+              40.0511119 
+            ], 
+            [ 
+              -83.0004971, 
+              40.052481 
+            ], 
+            [ 
+              -82.9967924, 
+              40.0135819 
+            ], 
+            [ 
+              -82.9645779, 
+              40.0128571 
+            ], 
+            [ 
+              -82.9516115, 
+              40.0511119 
+            ] 
+          ] 
+        ] 
+      ] 
+    } 
+}
+]
 }
