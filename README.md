@@ -183,3 +183,36 @@ This will prepare all the assets for the next stages.
 After building the assets, simply run:
 
     docker-compose up
+
+## Maintaining / updating a deployment
+
+### `rebuild.sh`
+
+This repository includes a simple bash script that, when run, will
+automatically:
+1. Fetch fresh OpenStreetMap and tasking manager data
+2. Rebuild all data via existing pipelines
+3. Rebuild all relevant `docker-compose` services (the router, the React
+front end, etc).
+4. Re-deploy all relevant `docker-compose` services (the router, the React
+front end, and the Caddy reverse proxy).
+
+The current main deployment of `accessmap-incremental` runs this script at
+2 AM every day via a cron job.
+
+### Updating
+
+`accessmap-incremental` is developed from an open source, public git repository
+and will be updated from time to time. If you want to pull the latest changes,
+you can use git directly via `git pull origin main`.
+
+If you know what services do and don't need to be updated, you can of course
+run your own `docker-compose` commands to rebuild and redeploy them. But in
+general, after pulling a new version of `accessmap-incremental` you may run
+these commands to ensure a complete update:
+1. `docker-compose build --profile data --no-cache`
+2. `docker-compose build --profile build --no-cache`
+3. `docker-compose build --no-cache`
+4. `docker-compose down --profile data && docker-compose up -d --profile data`
+5. `docker-compose down --profile build && docker-compose up -d --profile build`
+5. `docker-compose down && docker-compose up -d`
