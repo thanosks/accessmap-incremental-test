@@ -137,7 +137,9 @@ def crossings(
     for geojson in project_geojson:
         click.echo(f"    Annotating from {geojson}...")
         gdf_proj = gpd.read_file(geojson)
-        gdf_mapped = gdf_proj[gdf_proj["taskStatus"] == "MAPPED"]
+        mapped = gdf_proj["taskStatus"] == "MAPPED"
+        validated = gdf_proj["taskStatus"] == "VALIDATED"
+        gdf_mapped = gdf_proj[mapped | validated]
         # TODO: this function is so simple - just put it here instead?
         annotate_crossings(gdf, gdf_mapped)
         # Accumulate tasks
@@ -169,7 +171,9 @@ def sidewalks(
     for geojson in project_geojson:
         click.echo(f"    Annotating from {geojson}...")
         gdf_proj = gpd.read_file(geojson)
-        gdf_mapped = gdf_proj[gdf_proj["taskStatus"] == "MAPPED"]
+        mapped = gdf_proj["taskStatus"] == "MAPPED"
+        validated = gdf_proj["taskStatus"] == "VALIDATED"
+        gdf_mapped = gdf_proj[mapped | validated]
         # TODO: this function is so simple - just put it here instead?
         annotate_sidewalks(gdf, gdf_mapped)
         # Accumulate tasks
