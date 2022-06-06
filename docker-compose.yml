@@ -132,7 +132,7 @@ services:
   build_webapp:
     env_file: accessmap-incremental.env
     build:
-      context: https://github.com/accessmap/accessmap-webapp.git#3372ff45e4c2a7c832a9e72e5c5d80e540075614
+      context: https://github.com/accessmap/accessmap-webapp.git#18c32c52b9a1fbab65e40c2aedd1f4fe0b51dc20
     command: npm run build
     volumes:
       - ./build/webapp:/www/public
