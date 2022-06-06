@@ -33,6 +33,7 @@ services:
   api:
     <<: *api-config
     command: poetry run gunicorn --bind 0.0.0.0:5000 'wsgi:build_app(endpoint="/api/v1")'
+    stop_signal: SIGINT
     restart: unless-stopped
     dns:
       - 8.8.8.8
