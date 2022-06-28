@@ -216,3 +216,32 @@ these commands to ensure a complete update:
 4. `docker-compose down --profile data && docker-compose up -d --profile data`
 5. `docker-compose down --profile build && docker-compose up -d --profile build`
 5. `docker-compose down && docker-compose up -d`
+
+## Rebuilding the router
+
+There are circumstances in which you want to redeploy the router. To be sure
+that it's fully redeployed, run:
+
+    docker-compose up build_router
+
+And then
+
+    docker-compose up -d router
+
+## Editing the cost function
+
+There are two contexts in which you might want to edit the cost function:
+
+* When developing a new one and you need rapid feedback.
+
+* When you have a clear cost function developed and want it to be used in
+future deployments.
+
+For the rapid feedback mode, edit `build/router/cost-*.py`, where the `.py`
+file is a given cost function. Restarting the router container
+(`docker-compose stop router && docker-compose rm -f router && docker-compose up -d router`)
+will load the changes. However, the `build` directory is overwritten on future
+deployments, so once you like how the cost function looks, copy it to the
+`config/router` directory. Keep a close look at permissions - the `build`
+directory might be owned by a root user and you'll need to change permissions,
+e.g. `chown youruser:youruser config/router/cost-*.py`.
