@@ -171,8 +171,8 @@ the settings there to the current deployment. Use `HOST=localhost` and
 
 #### 2. Building the assets
 
-After placing the `transportation.geojson` file produced in the next section
-(Data Process) into the `data` directory, simply run:
+After creating the `transportation-tasks.geojson` file produced in the data
+process, run:
 
     docker-compose --profile build up
 
