@@ -242,6 +242,6 @@ file is a given cost function. Restarting the router container
 (`docker-compose stop router && docker-compose rm -f router && docker-compose up -d router`)
 will load the changes. However, the `build` directory is overwritten on future
 deployments, so once you like how the cost function looks, copy it to the
-`config/router` directory. Keep a close look at permissions - the `build`
+`config/unweaver` directory. Keep a close look at permissions - the `build`
 directory might be owned by a root user and you'll need to change permissions,
 e.g. `chown youruser:youruser config/router/cost-*.py`.
