@@ -1,6 +1,5 @@
 {
   "id": "powered",
-  "name": "powered",
   "args": [
     {
       "name": "avoidCurbs",
@@ -24,5 +23,5 @@
     }
   ],
   "cost_function": "cost-custom.py",
-  "directions": "directions-custom.py"
+  "shortest_path": "shortest_path-custom.py"
 }

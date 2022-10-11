@@ -1,7 +1,7 @@
 import copy
 
 
-def directions(status, G, origin, destination, cost, nodes, edges):
+def shortest_path(status, G, origin, destination, cost, nodes, edges):
     # Extract edge segments and total coordinates of path
     segments = {"type": "FeatureCollection", "features": []}
     coords = [edges[0]["geom"]["coordinates"][0]]

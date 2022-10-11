@@ -11,3 +11,6 @@ build
 
 # Deployment configuration
 accessmap-incremental.env
+
+# Optional override docker-compose
+docker-compose.override.yml
