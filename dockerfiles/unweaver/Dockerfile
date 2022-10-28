@@ -1,7 +1,7 @@
 FROM python:3.8-buster
 MAINTAINER Nick Bolten <nbolten@gmail.com>
 
-ARG GIT_HASH="5fd34abcf855ef51a69d010c421dbb680ebcc128"
+ARG GIT_HASH="0ad4f0ac6997fd01de72deb82b57a541088b2c55"
 
 ENV SERVER_PORT=5656
 
