@@ -42,6 +42,7 @@ def street_avoidance_function(streetAvoidance, k=1):
 
 
 def cost_fun_generator(
+    G,
     base_speed=WALK_BASE,
     downhill=0.1,
     uphill=0.085,
