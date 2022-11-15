@@ -26,6 +26,7 @@ services:
       - ./build/tiles:/tiles:ro
       - ./build/webapp:/webapp
       - ./input/config.geojson:/regions/regions.geojson:ro
+      - ./output/transportation-tasks.geojson:/data/transportation.geojson
     links:
       - router
       - api

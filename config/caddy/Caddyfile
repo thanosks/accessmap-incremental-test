@@ -45,6 +45,15 @@
     }
 }
 
+{$HOST}/api/v1/data {
+    tls {$TLS:off}
+    root /data
+    header /transportation.geojson {
+        Access-Control-Allow-Origin *
+    }
+}
+
+
 {$HOST}/tiles {
     tls {$TLS:off}
 
