@@ -245,3 +245,83 @@ deployments, so once you like how the cost function looks, copy it to the
 `config/unweaver` directory. Keep a close look at permissions - the `build`
 directory might be owned by a root user and you'll need to change permissions,
 e.g. `chown youruser:youruser config/router/cost-*.py`.
+
+## Running a local development environment
+
+The local development environment shares nearly all of the same steps as for
+the production environment. The only real changes are to use a different
+"cascading" docker-compose YAML file. In production, you must also apply the
+production settings by cascading `docker-compose.prod.yml` on top of the
+default `docker-compose.yml` file whenever calling `docker-compose`. For
+example, to run the servers during the final step, you need to run
+`docker-compose -f docker-compose.yml -f docker-compose.prod.yml up`.
+
+During local development, you'll cascade a `docker-compose.override.yml` file
+instead of a `docker-compose.prod.yml` file. Once it is present, this
+"override" YAML will be automatically recognized by `docker-compose`, so to
+run the servers in the final step, you will only need to write
+`docker-compose up`.
+
+To set up the development environment, you'll need to make changes to two
+files. First, you will need to edit the `accessmap-incrementa.env` file, which holds environment variables
+for confguring the app, to use settings safe for local development. Then you
+will need to create a `docker-compose.override.yml` that will hold
+settings specific to how the services should run, mostly just opening ports.
+
+### Modifying the `accessmap-incremental.env` file for local development
+
+You will want to change the following settings for local development:
+
+- `HOST`: Change the value to be `http://localhost:2015`, which is where the
+reverse proxy will be running locally.
+
+- `TLS`: Change the value to be "off", indicating that you will not be using
+a secure TLS connection for local requests. There will be no external requests
+to the services, so this is not a significant security concern.
+
+- `ANALYTICS`: You should usually set this to "no" during development unless
+you want to specifically debug a new analytics project.
+
+- `SECRET_KEY`: Use a different value during development.
+
+- `JWT_SECRET_KEY`: Use a different value during development.
+
+- `OSM_URI`: Set this to `https://master.apis.dev.openstreetmap.org/` if it
+isn't already set to this. This is the dev server for OpenStreetMap, where it
+is safe to authenticate and make changes without impacting the main OSM db.
+You will need to create an account and OAuth1.0a credentials at this endpoint,
+as OpenStreetMap does not copy users to its dev server.
+
+- `OSM_CLIENT_SECRET`: This will be an OAuth1.0a secret for the OSM dev server.
+
+- `OSM_CONSUMER_CALLBACK_URI`: Set this to
+`http://localhost:2015/login_callback`.
+
+- `SQLALCHEMY_DATABASE_URL`: Set this to `sqlite:////tmp/accessmap-api.db`, or
+to any SQLite URI for the path where you'd like to store the `API` database
+during development.
+
+### Set up docker-compose
+
+Copy the `docker-compose.override.yml.example` to
+`docker-compose.override.yml`.
+
+Once copied, running `docker-compose` commands will automatically cascade the
+`docker-compose.yml` and `docker-compose.override.yml` files, opening up ports
+for each service. Here is a list of the services that can be reached after
+running `docker-compose up`:
+
+- The web app can be reached at `localhost:2015`.
+
+- The API server will be at both `localhost:5000` and `localhost:2015/api/v1`.
+
+- The routing server will be at both `localhost:5656` and
+`localhost:2015/api/v1/routing`.
+
+- The tile server will be at `localhost:2015/tiles`.
+
+- The public regions GeoJSON file will be at
+`localhost:2015/api/v1/regions/regions.geojson`. Some versions of the React
+app (used for the AccessMap front end) will require you to download this file
+and put it in the root directory of the web application. Some newer versions
+will expect to find it relative to the root of the API endpoint.
