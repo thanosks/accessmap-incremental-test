@@ -3,7 +3,8 @@ version: '3.8'
 x-api-config: &api-config
   env_file: accessmap-incremental.env
   build:
-    context: https://github.com/accessmap/accessmap-api.git#v0.1.3
+    #context: https://github.com/accessmap/accessmap-api.git#v0.1.3
+    context: ../accessmap-api
 
 x-router-config: &router-config
   env_file: accessmap-incremental.env
@@ -134,7 +135,8 @@ services:
   build_webapp:
     env_file: accessmap-incremental.env
     build:
-      context: https://github.com/accessmap/accessmap-webapp.git#7da92b009a24d818ef4ca8a1d925d78279bab94e
+      #context: https://github.com/accessmap/accessmap-webapp.git#7da92b009a24d818ef4ca8a1d925d78279bab94e
+      context: ../accessmap-webapp
     command: npm run build
     volumes:
       - ./build/webapp:/www/public
