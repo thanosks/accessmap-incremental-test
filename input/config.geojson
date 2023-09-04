@@ -1,27 +1,41 @@
 {
   "type": "FeatureCollection",
-  "features": [{
-    "type": "Feature",
-    "geometry": {
-      "type": "MultiPolygon",
-      "coordinates": [
-        [
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
           [
-            [19.912573000016387, 39.621851668108555],
-            [19.914815326752837, 39.62181447964205],
-            [19.914885064187224, 39.619224619915],
-            [19.912594457688506, 39.61903453810555]
+            [
+              [
+                19.912573000016387,
+                39.621851668108555
+              ],
+              [
+                19.914815326752837,
+                39.62181447964205
+              ],
+              [
+                19.914885064187224,
+                39.619224619915
+              ],
+              [
+                19.912594457688506,
+                39.61903453810555
+              ]
+            ]
           ]
         ]
-      ]
-    },
-    "properties": {
-      "id": "greece.corfu",
-      "name": "Corfu, Greece",
-      "lon": 19.921679,
-      "lat": 39.624264,
-      "zoom": 14,
-      "extract_url": "https://download.geofabrik.de/europe/greece-latest.osm.pbf"
+      },
+      "properties": {
+        "id": "corfu",
+        "name": "Corfu",
+        "lon": 19.921679,
+        "lat": 39.624264,
+        "zoom": 14,
+        "extract_url": "https://download.geofabrik.de/europe/greece-latest.osm.pbf"
+      }
     }
-  }]
+  ]
 }
