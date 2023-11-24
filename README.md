@@ -316,12 +316,12 @@ running `docker-compose up`:
 - The API server will be at both `localhost:5000` and `localhost:2015/api/v1`.
 
 - The routing server will be at both `localhost:5656` and
-`localhost:2015/api/v1/routing`.
+`localhost:2015/api/routing`.
 
 - The tile server will be at `localhost:2015/tiles`.
 
 - The public regions GeoJSON file will be at
-`localhost:2015/api/v1/regions/regions.geojson`. Some versions of the React
+`localhost:2015/api/regions/regions.geojson`. Some versions of the React
 app (used for the AccessMap front end) will require you to download this file
 and put it in the root directory of the web application. Some newer versions
 will expect to find it relative to the root of the API endpoint.
