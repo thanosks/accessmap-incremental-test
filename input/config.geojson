@@ -2,6 +2,14 @@
   "type": "FeatureCollection",
   "features": [{
     "type": "Feature",
+    "properties": {
+      "id": "gr.corfu",
+      "name": "Corfu, GR",
+      "lon": 19.919815592723648,
+      "lat": 39.61930933112634,
+      "zoom": 14,
+      "extract_url": "https://download.geofabrik.de/europe/greece-latest.osm.pbf"
+    },
     "geometry": {
       "type": "MultiPolygon",
       "coordinates": [
@@ -30,15 +38,6 @@
           ]
         ]
       ]
-    },
-    "properties": {
-      "id": "gr.corfu",
-      "name": "Corfu, GR",
-      "lon": 19.919815592723648,
-      "lat": 39.61930933112634,
-      "zoom": 14,
-      "extract_url": "https://download.geofabrik.de/europe/greece-latest.osm.pbf"
     }
-  }
-]
+  }]
 }
